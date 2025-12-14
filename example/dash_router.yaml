@@ -1,0 +1,19 @@
+# Dash Router Configuration
+# https://github.com/example/dash_router
+
+# Route scanning configuration
+scan:
+  # Paths to scan for route files (glob patterns)
+  paths:
+    - "lib/pages/**/*.dart"
+  # Paths to exclude from scanning
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+
+# Generation configuration
+generate:
+  # Output path for generated routes file
+  output: "lib/generated/routes.dart"
+  # Output directory for route info files
+  route_info_output: "lib/generated/route_info/"

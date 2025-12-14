@@ -1,0 +1,23 @@
+name: dash_router
+description: A powerful, type-safe Flutter routing library with zero mental overhead. Features code generation, guards, middleware, and seamless navigation.
+version: 1.0.0
+homepage: https://github.com/iota9star/dash_router
+repository: https://github.com/iota9star/dash_router
+issue_tracker: https://github.com/iota9star/dash_router/issues
+
+resolution: workspace
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  dash_router_annotations: ^1.0.0
+  meta: ^1.12.0
+  collection: ^1.18.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0

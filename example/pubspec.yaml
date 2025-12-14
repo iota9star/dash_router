@@ -1,0 +1,30 @@
+name: dash_router_example
+description: Example application demonstrating dash_router usage.
+
+publish_to: 'none'
+
+resolution: workspace
+
+version: 1.0.0
+
+environment:
+  sdk: ^3.5.0
+  flutter: '>=3.22.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  dash_router:
+    path: ../packages/dash_router
+  dash_router_annotations:
+    path: ../packages/dash_router_annotations
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  dash_router_cli:
+    path: ../packages/dash_router_cli
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true

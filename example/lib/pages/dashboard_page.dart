@@ -1,0 +1,405 @@
+// Copyright 2025 The Dash Router Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+import 'package:dash_router/dash_router.dart';
+import 'package:flutter/material.dart';
+
+import '../generated/routes.dart';
+
+/// Dashboard page demonstrating nested routes.
+///
+/// This page serves as a container for dashboard sub-routes:
+/// - `/app/dashboard` - this main dashboard view
+/// - `/app/dashboard/analytics` - analytics child page
+/// - `/app/dashboard/reports` - reports child page with query params
+///
+/// Demonstrates the [DashSlideTransition.bottom] transition.
+@DashRoute(
+  path: '/app/dashboard',
+  name: 'dashboard',
+  parent: '/app',
+  transition: DashSlideTransition.bottom(),
+)
+class DashboardPage extends StatelessWidget {
+  /// Creates the dashboard page.
+  const DashboardPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Dashboard'),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+      ),
+      body: GridView.count(
+        crossAxisCount: 2,
+        padding: const EdgeInsets.all(16),
+        mainAxisSpacing: 16,
+        crossAxisSpacing: 16,
+        children: [
+          _DashboardCard(
+            icon: Icons.analytics,
+            title: 'Analytics',
+            subtitle: 'View analytics',
+            onTap: () => context.pushAppDashboardAnalytics(),
+          ),
+          _DashboardCard(
+            icon: Icons.summarize,
+            title: 'Reports',
+            subtitle: 'View reports',
+            onTap: () => context.pushAppDashboardReports(
+              dateRange: 'last_30_days',
+            ),
+          ),
+          _DashboardCard(
+            icon: Icons.settings,
+            title: 'Settings',
+            subtitle: 'Go to settings',
+            onTap: () => context.push(const AppSettingsRoute()),
+          ),
+          _DashboardCard(
+            icon: Icons.home,
+            title: 'Home',
+            subtitle: 'Back to home',
+            onTap: () => context.pop(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DashboardCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _DashboardCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 48,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Dashboard analytics page - sibling of dashboard.
+///
+/// This is a separate page that can be navigated to from the dashboard,
+/// but is not nested inside it. Both share the same parent shell (`/app`).
+@DashRoute(
+  path: '/app/dashboard/analytics',
+  name: 'dashboardAnalytics',
+  parent: '/app',
+  transition: DashSlideTransition.right(),
+)
+class DashboardAnalyticsPage extends StatelessWidget {
+  /// Creates the analytics page.
+  const DashboardAnalyticsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final route = context.route;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Analytics'),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Route info
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Route Info',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 12),
+                    _InfoRow(label: 'Pattern', value: route.pattern),
+                    _InfoRow(label: 'Name', value: route.name),
+                    _InfoRow(
+                        label: 'Previous', value: route.previousPath ?? 'none'),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Fake analytics cards
+            _StatsCard(
+                title: 'Page Views', value: '12,345', icon: Icons.visibility),
+            _StatsCard(title: 'Users', value: '1,234', icon: Icons.people),
+            _StatsCard(title: 'Sessions', value: '5,678', icon: Icons.devices),
+            _StatsCard(
+                title: 'Bounce Rate', value: '32%', icon: Icons.trending_down),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Dashboard reports page with query parameters.
+///
+/// This is a separate page navigable from the dashboard, sharing
+/// the same parent shell (`/app`).
+///
+/// Demonstrates:
+/// - Query parameter `dateRange` with default value
+/// - Query parameter `reportType` as optional filter
+/// - Dynamic URL updates via `replaceWithDashboardReportsPage`
+@DashRoute(
+  path: '/app/dashboard/reports',
+  name: 'dashboardReports',
+  parent: '/app',
+  transition: DashSlideTransition.right(),
+)
+class DashboardReportsPage extends StatelessWidget {
+  /// Query parameter - date range filter with default.
+  final String dateRange;
+
+  /// Query parameter - optional report type filter.
+  final String? reportType;
+
+  /// Creates the reports page.
+  const DashboardReportsPage({
+    super.key,
+    this.dateRange = 'last_7_days',
+    this.reportType,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final route = context.route;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Reports'),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.date_range),
+            onSelected: (value) {
+              context.replaceWithAppDashboardReports(
+                dateRange: value,
+                reportType: reportType,
+              );
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(value: 'today', child: Text('Today')),
+              const PopupMenuItem(
+                  value: 'last_7_days', child: Text('Last 7 Days')),
+              const PopupMenuItem(
+                  value: 'last_30_days', child: Text('Last 30 Days')),
+              const PopupMenuItem(
+                  value: 'last_90_days', child: Text('Last 90 Days')),
+            ],
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Current params display
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Report Configuration',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 12),
+                    _InfoRow(label: 'Date Range', value: dateRange),
+                    _InfoRow(label: 'Report Type', value: reportType ?? 'all'),
+                    _InfoRow(label: 'URI', value: route.uri),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Report type filter
+            Text('Filter by Type',
+                style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: [
+                FilterChip(
+                  label: const Text('All'),
+                  selected: reportType == null,
+                  onSelected: (_) => context.replaceWithAppDashboardReports(
+                    dateRange: dateRange,
+                  ),
+                ),
+                FilterChip(
+                  label: const Text('Sales'),
+                  selected: reportType == 'sales',
+                  onSelected: (_) => context.replaceWithAppDashboardReports(
+                    dateRange: dateRange,
+                    reportType: 'sales',
+                  ),
+                ),
+                FilterChip(
+                  label: const Text('Traffic'),
+                  selected: reportType == 'traffic',
+                  onSelected: (_) => context.replaceWithAppDashboardReports(
+                    dateRange: dateRange,
+                    reportType: 'traffic',
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Fake report items
+            _ReportItem(
+                title: 'Sales Report', subtitle: 'Generated for $dateRange'),
+            _ReportItem(
+                title: 'Traffic Report', subtitle: 'Page views and sessions'),
+            _ReportItem(
+                title: 'User Report', subtitle: 'Active users breakdown'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StatsCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final IconData icon;
+
+  const _StatsCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+          child: Icon(icon, color: Theme.of(context).colorScheme.primary),
+        ),
+        title: Text(title),
+        trailing: Text(
+          value,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+              ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ReportItem extends StatelessWidget {
+  final String title;
+  final String subtitle;
+
+  const _ReportItem({required this.title, required this.subtitle});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        leading: const Icon(Icons.description),
+        title: Text(title),
+        subtitle: Text(subtitle),
+        trailing: IconButton(
+          icon: const Icon(Icons.download),
+          onPressed: () {},
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _InfoRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 1,
+            child: Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              value,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.secondary,
+                fontFamily: 'monospace',
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

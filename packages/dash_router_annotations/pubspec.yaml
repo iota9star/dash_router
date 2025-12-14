@@ -1,0 +1,23 @@
+name: dash_router_annotations
+description: Annotations for dash_router - A type-safe Flutter routing library with code generation support.
+version: 1.0.0
+homepage: https://github.com/iota9star/dash_router
+repository: https://github.com/iota9star/dash_router
+issue_tracker: https://github.com/iota9star/dash_router/issues
+
+resolution: workspace
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  meta: ^1.12.0
+
+topics:
+  - router
+  - code-generation
+  - type-safety
+  - route
+  - router-generator
