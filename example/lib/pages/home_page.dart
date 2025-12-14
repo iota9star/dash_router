@@ -155,6 +155,13 @@ class HomePage extends StatelessWidget {
           onTap: () => context.push(const AppSettingsRoute()),
         ),
 
+        // Edit profile - fullscreen dialog example
+        _NavButton(
+          title: 'Edit Profile (Fullscreen Dialog)',
+          subtitle: 'Using: fullscreenDialog: true',
+          onTap: () => context.push(const AppEditProfileRoute()),
+        ),
+
         // Navigate to demo
         _NavButton(
           title: 'Full Demo Page',

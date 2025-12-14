@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2025-12-14
+
+### Fixed
+
+- Fixed documentation to accurately reflect the API
+- Corrected annotation documentation - removed references to non-existent `@PathParam`, `@QueryParam`, `@BodyParam`
+- Updated README to show automatic parameter inference from constructor parameters
+- Clarified that guards and middleware should be passed as instances, not types
+
+### Documentation
+
+- Rewrote README with accurate API examples
+- Added documentation for unified `@DashRoute` usage for all route types
+- Added documentation for `@IgnoreParam` annotation
+- Updated Chinese documentation (README_zh.md) with correct examples
+
 ## [1.0.0] - 2025-12-13
 
 ### Added

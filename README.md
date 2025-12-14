@@ -43,13 +43,13 @@ dependencies:
   dash_router_annotations: ^1.0.0
 
 dev_dependencies:
-  build_runner: ^2.4.0
+  dash_router_cli: ^1.0.0
   dash_router_generator: ^1.0.0
 ```
 
 ### 2. Define Routes
 
-Use annotations to define page routes:
+Use annotations to define page routes. Parameters are automatically inferred from the constructor:
 
 ```dart
 import 'package:flutter/material.dart';
@@ -58,8 +58,8 @@ import 'package:dash_router/dash_router.dart';
 // Basic page route
 @DashRoute(path: '/user/:id')
 class UserPage extends StatelessWidget {
-  final String id;
-  final String? tab;
+  final String id;      // Path parameter (from :id)
+  final String? tab;    // Query parameter (optional)
   
   const UserPage({
     super.key,
@@ -69,7 +69,6 @@ class UserPage extends StatelessWidget {
   
   @override
   Widget build(BuildContext context) {
-    // Access route info via context.route - O(1) complexity
     final route = context.route;
     
     return Scaffold(
@@ -91,16 +90,43 @@ class UserPage extends StatelessWidget {
   transition: CupertinoTransition(),
 )
 class SettingsPage extends StatelessWidget { ... }
+
+// Shell route (wraps nested routes)
+@DashRoute(path: '/app', shell: true)
+class AppShell extends StatelessWidget {
+  final Widget child;
+  const AppShell({super.key, required this.child});
+  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: child,
+      bottomNavigationBar: const MyNavBar(),
+    );
+  }
+}
+
+// Redirect route
+@DashRoute(path: '/', redirectTo: '/app/home')
+class RootRedirect {}
+
+// Fullscreen dialog route
+@DashRoute(
+  path: '/edit-profile',
+  fullscreenDialog: true,
+  transition: DashSlideTransition.bottom(),
+)
+class EditProfilePage extends StatelessWidget { ... }
 ```
 
 ### 3. Generate Code
 
 ```bash
-# Option 1: Using build_runner
-dart run build_runner build
-
-# Option 2: Using CLI tool
+# Using CLI tool (recommended)
 dart run dash_router_cli:dash_router generate
+
+# Or watch for changes
+dart run dash_router_cli:dash_router watch
 ```
 
 ### 4. Configure Router
@@ -139,14 +165,18 @@ class MyApp extends StatelessWidget {
 ### 5. Navigate
 
 ```dart
-// Using generated type-safe extensions
-context.pushUser$Id(id: '123', tab: 'profile');
+// Using generated type-safe extensions (recommended)
+context.pushAppUser$Id(id: '123', tab: 'profile');
 
-// Or using string path
-context.push('/user/123?tab=profile');
+// Using typed route objects
+context.push(AppUser$IdRoute(id: '123', tab: 'profile'));
+
+// Using string path
+context.pushNamed('/user/123?tab=profile');
 
 // Replace current route
-context.replace('/home');
+context.replace(AppHomeRoute());
+context.replaceNamed('/home');
 
 // Go back
 context.pop();
@@ -155,22 +185,80 @@ context.pop();
 context.pop<String>('success');
 
 // Clear stack and navigate
-context.pushAndRemoveAll('/login');
+context.pushAndRemoveAll(AppLoginRoute());
 ```
 
 ## Documentation
 
-### Naming Convention
+### Parameter Types
 
-Generated code follows a path-based naming convention:
+Parameters are **automatically inferred** from constructor parameters:
 
-| Path | Route Class | Field Name | Extension |
-|------|-------------|------------|-----------|
-| `/app/user/:id` | `AppUser$IdRoute` | `appUser$Id` | `AppUser$IdNavigation` |
-| `/app/settings` | `AppSettingsRoute` | `appSettings` | `AppSettingsNavigation` |
-| `/` | `RootRoute` | `root` | `RootNavigation` |
+```dart
+@DashRoute(path: '/search/:category')
+class SearchPage extends StatelessWidget {
+  // Path parameter - matches :category in path
+  final String category;
+  
+  // Query parameters - optional parameters become query params
+  final int page;
+  final String? sortBy;
+  
+  const SearchPage({
+    super.key,
+    required this.category,
+    this.page = 1,
+    this.sortBy,
+  });
+}
+```
 
-Dynamic parameters use `$` prefix to distinguish from static segments.
+### Body Parameters (Complex Types)
+
+Use `arguments` for passing complex objects:
+
+```dart
+@DashRoute(
+  path: '/checkout',
+  arguments: [UserData, Product],  // Record type: (UserData, Product)
+)
+class CheckoutPage extends StatelessWidget {
+  const CheckoutPage({super.key});
+  
+  @override
+  Widget build(BuildContext context) {
+    // Type-safe access via generated extension
+    final (user, product) = context.route.arguments;
+    return Text(user.name);
+  }
+}
+```
+
+### Parameter Access
+
+```dart
+@override
+Widget build(BuildContext context) {
+  final route = context.route;
+  
+  // Path parameters - O(1) access
+  final id = route.path.get<String>('id');
+  
+  // Query parameters
+  final page = route.query.get<int>('page', defaultValue: 1);
+  
+  // Body parameters (raw arguments)
+  final args = route.body.arguments;
+  
+  // Named body parameter
+  final user = route.body.get<User>('user');
+  
+  // All parameters
+  final allParams = route.allParams;
+  
+  return ...;
+}
+```
 
 ### Transitions
 
@@ -207,7 +295,7 @@ All built-in transitions support `const` construction:
 Runtime custom transition:
 
 ```dart
-context.push(
+context.pushNamed(
   '/custom',
   transition: CustomAnimatedTransition(
     duration: Duration(milliseconds: 500),
@@ -222,11 +310,13 @@ context.push(
 
 ```dart
 class AuthGuard extends DashGuard {
-  const AuthGuard();
+  final AuthService authService;
+  
+  const AuthGuard(this.authService);
   
   @override
   Future<GuardResult> canActivate(GuardContext context) async {
-    if (await AuthService.isLoggedIn()) {
+    if (await authService.isLoggedIn()) {
       return const GuardAllow();
     }
     return const GuardRedirect('/login');
@@ -234,12 +324,12 @@ class AuthGuard extends DashGuard {
 }
 
 // Register guard globally
-router.guards.register(const AuthGuard());
+router.guards.register(AuthGuard(authService));
 
-// Use on specific route with instance
+// Use on specific route (pass instance)
 @DashRoute(
   path: '/admin',
-  guards: [AuthGuard()],
+  guards: [AuthGuard(authService)],
 )
 class AdminPage extends StatelessWidget { ... }
 ```
@@ -264,98 +354,28 @@ class LoggingMiddleware extends DashMiddleware {
 router.middleware.register(LoggingMiddleware());
 ```
 
-### Parameter Access
+### Naming Convention
 
-```dart
-@override
-Widget build(BuildContext context) {
-  final route = context.route;
-  
-  // Path parameters
-  final id = route.path.get<String>('id');
-  
-  // Query parameters
-  final page = route.query.get<int>('page', defaultValue: 1);
-  
-  // Body arguments (raw)
-  final user = route.body as User?;
-  
-  // With generated extension (type-safe):
-  // final (user, product) = route.typedBody;
-  
-  // All parameters
-  final allParams = route.allParams;
-  
-  return ...;
-}
-```
+Generated code follows a path-based naming convention:
 
-### Parameter Types
+| Path | Route Class | Field Name |
+|------|-------------|------------|
+| `/app/user/:id` | `AppUser$IdRoute` | `appUser$Id` |
+| `/app/settings` | `AppSettingsRoute` | `appSettings` |
+| `/` | `RootRoute` | `root` |
 
-#### Path Parameters
-
-```dart
-@DashRoute(path: '/user/:id/post/:postId')
-class PostPage extends StatelessWidget {
-  @PathParam()
-  final String id;
-  
-  @PathParam()
-  final String postId;
-}
-```
-
-#### Query Parameters
-
-```dart
-@DashRoute(path: '/search')
-class SearchPage extends StatelessWidget {
-  @QueryParam()
-  final String? keyword;
-  
-  @QueryParam(defaultValue: '1')
-  final int page;
-  
-  @QueryParam(name: 'sort_by')
-  final String? sortBy;
-}
-```
-
-#### Body Parameters
-
-```dart
-// Using arguments annotation for type-safe body access
-@DashRoute(
-  path: '/edit',
-  arguments: [User],  // Generates typedBody getter
-)
-class EditPage extends StatelessWidget {
-  const EditPage({super.key});
-  
-  @override
-  Widget build(BuildContext context) {
-    // Type-safe access via generated extension
-    final user = context.route.typedBody;
-    return Text(user.name);
-  }
-}
-
-// Pass when navigating
-context.pushEditPage(body: user);
-// or
-context.push('/edit', arguments: user);
-```
+Dynamic parameters use `$` prefix to distinguish from static segments.
 
 ## CLI Tool
 
 ```bash
-# Initialize configuration (in your app package root)
+# Initialize configuration
 dart run dash_router_cli:dash_router init
 
 # Generate route code
 dart run dash_router_cli:dash_router generate
 
-# Watch file changes and auto-generate
+# Watch file changes
 dart run dash_router_cli:dash_router watch
 
 # Validate configuration
@@ -364,7 +384,7 @@ dart run dash_router_cli:dash_router validate
 # Clean generated files
 dart run dash_router_cli:dash_router clean
 
-# Monorepo: use --config to point to target package config
+# Monorepo: use --config to specify config file
 dart run dash_router_cli:dash_router generate --config example/dash_router.yaml
 ```
 

@@ -12,6 +12,7 @@ import 'package:dash_router_example/shared/user_data.dart';
 import 'package:dash_router_example/shared/product.dart';
 import 'package:dash_router_example/shared/shipping_info.dart';
 import 'package:dash_router_example/pages/dashboard_page.dart';
+import 'package:dash_router_example/pages/edit_profile_page.dart';
 import 'package:dash_router_example/pages/home_page.dart';
 import 'package:dash_router_example/pages/login_page.dart';
 import 'package:dash_router_example/pages/navigation_demo_page.dart';
@@ -157,6 +158,19 @@ abstract final class Routes {
       return NavigationDemoPage(key: params.body.get<Key?>('key'));
     })(),
     parent: '/app',
+  );
+
+  /// Route: /app/edit-profile → EditProfilePage
+  static final appEditProfile = RouteEntry(
+    pattern: '/app/edit-profile',
+    name: 'editProfile',
+    builder: (context, data) => (() {
+      final params = TypedParamsResolver(data.params);
+      return EditProfilePage(key: params.body.get<Key?>('key'));
+    })(),
+    parent: '/app',
+    transition: const DashSlideTransition.bottom(),
+    fullscreenDialog: true,
   );
 
   /// Route: /app/home → HomePage
@@ -328,6 +342,7 @@ final List<RouteEntry> generatedRoutes = [
   Routes.appDashboardAnalytics,
   Routes.appDashboardReports,
   Routes.appDemo,
+  Routes.appEditProfile,
   Routes.appHome,
   Routes.appOrder,
   Routes.appProducts,
@@ -835,6 +850,46 @@ class AppDashboardReportsRoute extends DashTypedRoute {
         'dateRange': dateRange,
         if (reportType != null) 'reportType': reportType,
       };
+
+  /// Body arguments for this route.
+  @override
+  Object? get $body => null;
+}
+
+/// Typed route for [EditProfilePage] at `/app/edit-profile`.
+///
+/// This route class provides type-safe navigation to
+/// the EditProfilePage widget.
+///
+/// ## Example
+///
+/// ```dart
+/// context.push(AppEditProfileRoute(
+/// ));
+/// ```
+class AppEditProfileRoute extends DashTypedRoute {
+  /// Optional custom transition for this navigation.
+  @override
+  final DashTransition? $transition;
+
+  /// Creates a typed route for EditProfilePage.
+  const AppEditProfileRoute({this.$transition});
+
+  /// Route pattern: `/app/edit-profile`
+  @override
+  String get $pattern => '/app/edit-profile';
+
+  /// Route name: `editProfile`
+  @override
+  String get $name => 'editProfile';
+
+  /// Concrete path with interpolated parameters.
+  @override
+  String get $path => '/app/edit-profile';
+
+  /// Query parameters for this route.
+  @override
+  Map<String, dynamic>? get $query => null;
 
   /// Body arguments for this route.
   @override
@@ -2154,6 +2209,79 @@ extension AppDashboardReportsNavigation on BuildContext {
       path_,
       predicate,
       query: query_,
+      body: body_,
+      transition: $transition,
+    );
+  }
+}
+
+/// Navigation extension for [EditProfilePage] at `/app/edit-profile`.
+///
+/// Provides type-safe navigation methods:
+/// - `pushAppEditProfile()` - Push route onto stack
+/// - `replaceWithAppEditProfile()` - Replace current route
+/// - `popAndPushAppEditProfile()` - Pop and push
+/// - `pushAppEditProfileAndRemoveUntil()` - Push and remove until
+extension AppEditProfileNavigation on BuildContext {
+  /// Push `/app/edit-profile` onto navigation stack.
+  ///
+  /// Example:
+  /// ```dart
+  /// context.pushAppEditProfile();
+  /// ```
+  Future<T?> pushAppEditProfile<T>({Key? key, DashTransition? $transition}) {
+    final path_ = '/app/edit-profile';
+    final body_ = <String, dynamic>{'key': key};
+    final router = DashRouter.of(this);
+    return router.pushNamed<T>(path_, body: body_, transition: $transition);
+  }
+
+  /// Replace current route with `/app/edit-profile`.
+  Future<T?> replaceWithAppEditProfile<T, TO extends Object?>({
+    Key? key,
+    TO? result,
+    DashTransition? $transition,
+  }) {
+    final path_ = '/app/edit-profile';
+    final body_ = <String, dynamic>{'key': key};
+    final router = DashRouter.of(this);
+    return router.pushReplacementNamed<T, TO>(
+      path_,
+      body: body_,
+      result: result,
+      transition: $transition,
+    );
+  }
+
+  /// Pop current route and push `/app/edit-profile`.
+  Future<T?> popAndPushAppEditProfile<T, TO extends Object?>({
+    Key? key,
+    TO? result,
+    DashTransition? $transition,
+  }) {
+    final path_ = '/app/edit-profile';
+    final body_ = <String, dynamic>{'key': key};
+    final router = DashRouter.of(this);
+    return router.popAndPushNamed<T, TO>(
+      path_,
+      body: body_,
+      result: result,
+      transition: $transition,
+    );
+  }
+
+  /// Push `/app/edit-profile` and remove routes until predicate returns true.
+  Future<T?> pushAppEditProfileAndRemoveUntil<T>({
+    Key? key,
+    required bool Function(Route<dynamic>) predicate,
+    DashTransition? $transition,
+  }) {
+    final path_ = '/app/edit-profile';
+    final body_ = <String, dynamic>{'key': key};
+    final router = DashRouter.of(this);
+    return router.pushNamedAndRemoveUntil<T>(
+      path_,
+      predicate,
       body: body_,
       transition: $transition,
     );

@@ -1,6 +1,6 @@
 name: dash_router_cli
 description: CLI tool for dash_router - generate routes and manage configuration
-version: 1.0.0
+version: 1.0.1
 homepage: https://github.com/iota9star/dash_router
 repository: https://github.com/iota9star/dash_router
 issue_tracker: https://github.com/iota9star/dash_router/issues

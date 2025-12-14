@@ -55,11 +55,15 @@ class MyApp extends StatelessWidget {
 ### 导航
 
 ```dart
-// 推送新路由
-context.push('/user/123');
+// 推送类型化路由（推荐）
+context.push(AppUserRoute(id: '123', tab: 'profile'));
+
+// 通过路径推送
+context.pushNamed('/user/123');
 
 // 替换当前路由
-context.replace('/home');
+context.replace(AppHomeRoute());
+context.replaceNamed('/home');
 
 // 弹出当前路由
 context.pop();
@@ -68,7 +72,8 @@ context.pop();
 context.pop<String>('result');
 
 // 清空栈并推送
-context.pushAndRemoveAll('/login');
+context.pushAndRemoveAll(AppLoginRoute());
+context.pushNamedAndRemoveAll('/login');
 ```
 
 ### 访问路由参数
@@ -84,14 +89,14 @@ Widget build(BuildContext context) {
   // 查询参数
   final page = route.query.get<int>('page', defaultValue: 1);
   
-  // Body 参数 - 统一 API
+  // Body 参数（原始 arguments）
+  final args = route.body.arguments;
+  
+  // 命名 body 参数访问
   final user = route.body.get<User>('user');
   
-  // 原始 arguments 访问
-  final rawArgs = route.body.arguments;
-  
-  // 使用生成的扩展（类型安全）：
-  // final (user, product) = route.typedBody; // 返回类型化的 Record
+  // 使用生成的扩展进行类型化 body 访问（Record 类型）：
+  // final (user, product) = route.arguments;
   
   return ...;
 }
@@ -103,13 +108,13 @@ Widget build(BuildContext context) {
 
 ```dart
 // 带转场推送
-context.push(
+context.pushNamed(
   '/details',
   transition: const DashSlideTransition.right(),
 );
 
 // 自定义转场
-context.push(
+context.pushNamed(
   '/custom',
   transition: CustomAnimatedTransition(
     duration: Duration(milliseconds: 500),
@@ -124,9 +129,13 @@ context.push(
 
 ```dart
 class AuthGuard extends DashGuard {
+  final AuthService authService;
+  
+  const AuthGuard(this.authService);
+  
   @override
   Future<GuardResult> canActivate(GuardContext context) async {
-    if (await isAuthenticated()) {
+    if (await authService.isAuthenticated()) {
       return const GuardAllow();
     }
     return const GuardRedirect('/login');
@@ -134,22 +143,31 @@ class AuthGuard extends DashGuard {
 }
 
 // 注册
-router.guards.register(AuthGuard());
+router.guards.register(AuthGuard(authService));
 ```
 
 ### 中间件
 
 ```dart
 class AnalyticsMiddleware extends DashMiddleware {
+  final AnalyticsService analytics;
+  
+  AnalyticsMiddleware(this.analytics);
+  
   @override
   Future<MiddlewareResult> handle(MiddlewareContext context) async {
     analytics.logScreenView(context.targetPath);
     return const MiddlewareContinue();
   }
+  
+  @override
+  Future<void> afterNavigation(MiddlewareContext context) async {
+    analytics.logPageLoadTime(context.elapsed);
+  }
 }
 
 // 注册
-router.middleware.register(AnalyticsMiddleware());
+router.middleware.register(AnalyticsMiddleware(analytics));
 ```
 
 ## API 参考

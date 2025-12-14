@@ -43,13 +43,13 @@ dependencies:
   dash_router_annotations: ^1.0.0
 
 dev_dependencies:
-  build_runner: ^2.4.0
+  dash_router_cli: ^1.0.0
   dash_router_generator: ^1.0.0
 ```
 
 ### 2. 定义路由
 
-使用注解定义页面路由：
+使用注解定义页面路由。参数从构造函数自动推断：
 
 ```dart
 import 'package:flutter/material.dart';
@@ -58,8 +58,8 @@ import 'package:dash_router/dash_router.dart';
 // 基础页面路由
 @DashRoute(path: '/user/:id')
 class UserPage extends StatelessWidget {
-  final String id;
-  final String? tab;
+  final String id;      // 路径参数（来自 :id）
+  final String? tab;    // 查询参数（可选）
   
   const UserPage({
     super.key,
@@ -69,7 +69,6 @@ class UserPage extends StatelessWidget {
   
   @override
   Widget build(BuildContext context) {
-    // 通过 context.route 访问路由信息 - O(1) 复杂度
     final route = context.route;
     
     return Scaffold(
@@ -91,16 +90,43 @@ class UserPage extends StatelessWidget {
   transition: CupertinoTransition(),
 )
 class SettingsPage extends StatelessWidget { ... }
+
+// Shell 路由（包裹嵌套路由）
+@DashRoute(path: '/app', shell: true)
+class AppShell extends StatelessWidget {
+  final Widget child;
+  const AppShell({super.key, required this.child});
+  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: child,
+      bottomNavigationBar: const MyNavBar(),
+    );
+  }
+}
+
+// 重定向路由
+@DashRoute(path: '/', redirectTo: '/app/home')
+class RootRedirect {}
+
+// 全屏对话框路由
+@DashRoute(
+  path: '/edit-profile',
+  fullscreenDialog: true,
+  transition: DashSlideTransition.bottom(),
+)
+class EditProfilePage extends StatelessWidget { ... }
 ```
 
 ### 3. 生成代码
 
 ```bash
-# 方式一：使用 build_runner
-dart run build_runner build
-
-# 方式二：使用 CLI 工具
+# 使用 CLI 工具（推荐）
 dart run dash_router_cli:dash_router generate
+
+# 或监听文件变化
+dart run dash_router_cli:dash_router watch
 ```
 
 ### 4. 配置路由器
@@ -139,14 +165,18 @@ class MyApp extends StatelessWidget {
 ### 5. 导航
 
 ```dart
-// 使用生成的类型安全扩展
-context.pushUser$Id(id: '123', tab: 'profile');
+// 使用生成的类型安全扩展（推荐）
+context.pushAppUser$Id(id: '123', tab: 'profile');
 
-// 或使用字符串路径
-context.push('/user/123?tab=profile');
+// 使用类型化路由对象
+context.push(AppUser$IdRoute(id: '123', tab: 'profile'));
+
+// 使用字符串路径
+context.pushNamed('/user/123?tab=profile');
 
 // 替换当前路由
-context.replace('/home');
+context.replace(AppHomeRoute());
+context.replaceNamed('/home');
 
 // 返回
 context.pop();
@@ -155,22 +185,80 @@ context.pop();
 context.pop<String>('success');
 
 // 清空栈并导航
-context.pushAndRemoveAll('/login');
+context.pushAndRemoveAll(AppLoginRoute());
 ```
 
 ## 文档
 
-### 命名约定
+### 参数类型
 
-生成的代码遵循基于路径的命名约定：
+参数从构造函数参数**自动推断**：
 
-| 路径 | 路由类名 | 字段名 | 扩展名 |
-|------|---------|--------|--------|
-| `/app/user/:id` | `AppUser$IdRoute` | `appUser$Id` | `AppUser$IdNavigation` |
-| `/app/settings` | `AppSettingsRoute` | `appSettings` | `AppSettingsNavigation` |
-| `/` | `RootRoute` | `root` | `RootNavigation` |
+```dart
+@DashRoute(path: '/search/:category')
+class SearchPage extends StatelessWidget {
+  // 路径参数 - 匹配路径中的 :category
+  final String category;
+  
+  // 查询参数 - 可选参数成为查询参数
+  final int page;
+  final String? sortBy;
+  
+  const SearchPage({
+    super.key,
+    required this.category,
+    this.page = 1,
+    this.sortBy,
+  });
+}
+```
 
-动态参数使用 `$` 前缀来区分静态段。
+### Body 参数（复杂类型）
+
+使用 `arguments` 传递复杂对象：
+
+```dart
+@DashRoute(
+  path: '/checkout',
+  arguments: [UserData, Product],  // Record 类型: (UserData, Product)
+)
+class CheckoutPage extends StatelessWidget {
+  const CheckoutPage({super.key});
+  
+  @override
+  Widget build(BuildContext context) {
+    // 通过生成的扩展进行类型安全访问
+    final (user, product) = context.route.arguments;
+    return Text(user.name);
+  }
+}
+```
+
+### 参数访问
+
+```dart
+@override
+Widget build(BuildContext context) {
+  final route = context.route;
+  
+  // 路径参数 - O(1) 访问
+  final id = route.path.get<String>('id');
+  
+  // 查询参数
+  final page = route.query.get<int>('page', defaultValue: 1);
+  
+  // Body 参数（原始 arguments）
+  final args = route.body.arguments;
+  
+  // 命名 body 参数
+  final user = route.body.get<User>('user');
+  
+  // 全部参数
+  final allParams = route.allParams;
+  
+  return ...;
+}
+```
 
 ### 转场动画
 
@@ -207,7 +295,7 @@ context.pushAndRemoveAll('/login');
 运行时自定义转场：
 
 ```dart
-context.push(
+context.pushNamed(
   '/custom',
   transition: CustomAnimatedTransition(
     duration: Duration(milliseconds: 500),
@@ -222,11 +310,13 @@ context.push(
 
 ```dart
 class AuthGuard extends DashGuard {
-  const AuthGuard();
+  final AuthService authService;
+  
+  const AuthGuard(this.authService);
   
   @override
   Future<GuardResult> canActivate(GuardContext context) async {
-    if (await AuthService.isLoggedIn()) {
+    if (await authService.isLoggedIn()) {
       return const GuardAllow();
     }
     return const GuardRedirect('/login');
@@ -234,12 +324,12 @@ class AuthGuard extends DashGuard {
 }
 
 // 全局注册守卫
-router.guards.register(const AuthGuard());
+router.guards.register(AuthGuard(authService));
 
 // 在特定路由上使用（传入实例）
 @DashRoute(
   path: '/admin',
-  guards: [AuthGuard()],
+  guards: [AuthGuard(authService)],
 )
 class AdminPage extends StatelessWidget { ... }
 ```
@@ -264,98 +354,28 @@ class LoggingMiddleware extends DashMiddleware {
 router.middleware.register(LoggingMiddleware());
 ```
 
-### 参数访问
+### 命名约定
 
-```dart
-@override
-Widget build(BuildContext context) {
-  final route = context.route;
-  
-  // 路径参数
-  final id = route.path.get<String>('id');
-  
-  // 查询参数
-  final page = route.query.get<int>('page', defaultValue: 1);
-  
-  // Body 参数（原始）
-  final user = route.body as User?;
-  
-  // 使用生成的扩展（类型安全）：
-  // final (user, product) = route.typedBody;
-  
-  // 全部参数
-  final allParams = route.allParams;
-  
-  return ...;
-}
-```
+生成的代码遵循基于路径的命名约定：
 
-### 参数类型
+| 路径 | 路由类名 | 字段名 |
+|------|---------|--------|
+| `/app/user/:id` | `AppUser$IdRoute` | `appUser$Id` |
+| `/app/settings` | `AppSettingsRoute` | `appSettings` |
+| `/` | `RootRoute` | `root` |
 
-#### 路径参数 (Path Params)
-
-```dart
-@DashRoute(path: '/user/:id/post/:postId')
-class PostPage extends StatelessWidget {
-  @PathParam()
-  final String id;
-  
-  @PathParam()
-  final String postId;
-}
-```
-
-#### 查询参数 (Query Params)
-
-```dart
-@DashRoute(path: '/search')
-class SearchPage extends StatelessWidget {
-  @QueryParam()
-  final String? keyword;
-  
-  @QueryParam(defaultValue: '1')
-  final int page;
-  
-  @QueryParam(name: 'sort_by')
-  final String? sortBy;
-}
-```
-
-#### 传递对象 (Body Params)
-
-```dart
-// 使用 arguments 注解实现类型安全的 body 访问
-@DashRoute(
-  path: '/edit',
-  arguments: [User],  // 生成 typedBody getter
-)
-class EditPage extends StatelessWidget {
-  const EditPage({super.key});
-  
-  @override
-  Widget build(BuildContext context) {
-    // 通过生成的扩展进行类型安全访问
-    final user = context.route.typedBody;
-    return Text(user.name);
-  }
-}
-
-// 导航时传递
-context.pushEditPage(body: user);
-// 或
-context.push('/edit', arguments: user);
-```
+动态参数使用 `$` 前缀来区分静态段。
 
 ## CLI 工具
 
 ```bash
-# 初始化配置（在你的 app 包根目录）
+# 初始化配置
 dart run dash_router_cli:dash_router init
 
 # 生成路由代码
 dart run dash_router_cli:dash_router generate
 
-# 监听文件变化并自动生成
+# 监听文件变化
 dart run dash_router_cli:dash_router watch
 
 # 验证配置
@@ -364,7 +384,7 @@ dart run dash_router_cli:dash_router validate
 # 清理生成的文件
 dart run dash_router_cli:dash_router clean
 
-# monorepo 场景：用 --config 指向目标包的配置文件
+# monorepo 场景：用 --config 指定配置文件
 dart run dash_router_cli:dash_router generate --config example/dash_router.yaml
 ```
 

@@ -55,11 +55,15 @@ class MyApp extends StatelessWidget {
 ### Navigation
 
 ```dart
-// Push a new route
-context.push('/user/123');
+// Push a typed route (recommended)
+context.push(AppUserRoute(id: '123', tab: 'profile'));
+
+// Push by path
+context.pushNamed('/user/123');
 
 // Replace current route
-context.replace('/home');
+context.replace(AppHomeRoute());
+context.replaceNamed('/home');
 
 // Pop current route
 context.pop();
@@ -68,7 +72,8 @@ context.pop();
 context.pop<String>('result');
 
 // Clear stack and push
-context.pushAndRemoveAll('/login');
+context.pushAndRemoveAll(AppLoginRoute());
+context.pushNamedAndRemoveAll('/login');
 ```
 
 ### Accessing Route Parameters
@@ -84,14 +89,14 @@ Widget build(BuildContext context) {
   // Query parameters
   final page = route.query.get<int>('page', defaultValue: 1);
   
-  // Body parameters - unified API
+  // Body parameters (raw arguments)
+  final args = route.body.arguments;
+  
+  // Named body parameter access
   final user = route.body.get<User>('user');
   
-  // Raw arguments access
-  final rawArgs = route.body.arguments;
-  
-  // With generated extension (type-safe):
-  // final (user, product) = route.typedBody; // Returns typed Record
+  // With generated extension for typed body (Record type):
+  // final (user, product) = route.arguments;
   
   return ...;
 }
@@ -103,13 +108,13 @@ Use built-in transitions or create custom ones:
 
 ```dart
 // Push with transition
-context.push(
+context.pushNamed(
   '/details',
   transition: const DashSlideTransition.right(),
 );
 
 // Custom transition
-context.push(
+context.pushNamed(
   '/custom',
   transition: CustomAnimatedTransition(
     duration: Duration(milliseconds: 500),
@@ -124,9 +129,13 @@ context.push(
 
 ```dart
 class AuthGuard extends DashGuard {
+  final AuthService authService;
+  
+  const AuthGuard(this.authService);
+  
   @override
   Future<GuardResult> canActivate(GuardContext context) async {
-    if (await isAuthenticated()) {
+    if (await authService.isAuthenticated()) {
       return const GuardAllow();
     }
     return const GuardRedirect('/login');
@@ -134,22 +143,31 @@ class AuthGuard extends DashGuard {
 }
 
 // Register
-router.guards.register(AuthGuard());
+router.guards.register(AuthGuard(authService));
 ```
 
 ### Middleware
 
 ```dart
 class AnalyticsMiddleware extends DashMiddleware {
+  final AnalyticsService analytics;
+  
+  AnalyticsMiddleware(this.analytics);
+  
   @override
   Future<MiddlewareResult> handle(MiddlewareContext context) async {
     analytics.logScreenView(context.targetPath);
     return const MiddlewareContinue();
   }
+  
+  @override
+  Future<void> afterNavigation(MiddlewareContext context) async {
+    analytics.logPageLoadTime(context.elapsed);
+  }
 }
 
 // Register
-router.middleware.register(AnalyticsMiddleware());
+router.middleware.register(AnalyticsMiddleware(analytics));
 ```
 
 ## API Reference

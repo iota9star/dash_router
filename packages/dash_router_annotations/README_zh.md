@@ -8,7 +8,7 @@ dash_router 路由库的注解定义。此包提供用于定义路由和配置�
 ## 特性
 
 - 📝 **路由注解** - 使用 `@DashRoute` 及相关注解定义路由
-- 🎯 **参数注解** - 使用 `@PathParam`、`@QueryParam`、`@BodyParam` 定义类型安全的参数
+- 🎯 **自动参数推断** - 从构造函数自动推断参数
 - 🎨 **转场定义** - 内置的路由动画转场类
 - ⚙️ **配置** - `@DashRouterConfig` 用于代码生成设置
 
@@ -25,18 +25,27 @@ dependencies:
 
 ### @DashRoute
 
-为页面 widget 定义路由：
+为页面 widget 定义路由。参数从构造函数自动推断：
+- 路径参数从路径中的 `:param` 模式获取
+- 查询参数从可选构造函数参数获取
+- Body 参数通过 `arguments` 属性定义
 
 ```dart
 @DashRoute(
   path: '/user/:id',
   transition: CupertinoTransition(),
-  guards: [AuthGuard],
-  middleware: [LoggingMiddleware],
+  guards: [AuthGuard()],
+  middleware: [LoggingMiddleware()],
 )
 class UserPage extends StatelessWidget {
-  final String id;
-  const UserPage({super.key, required this.id});
+  final String id;         // 路径参数（来自 :id）
+  final String? tab;       // 查询参数（可选）
+  
+  const UserPage({
+    super.key,
+    required this.id,
+    this.tab,
+  });
   // ...
 }
 ```
@@ -48,68 +57,132 @@ class UserPage extends StatelessWidget {
 ```dart
 @DashRouterConfig(
   generateNavigation: true,
-  generateTypedRoutes: true,
+  generateRouteInfo: true,
 )
 class AppRouter {}
 ```
 
-### 参数注解
+### 参数处理
+
+参数从构造函数参数**自动推断**：
 
 ```dart
-@DashRoute(path: '/search')
+@DashRoute(path: '/search/:category')
 class SearchPage extends StatelessWidget {
-  @PathParam()
-  final String? category;
+  // 路径参数 - 匹配路径中的 :category
+  final String category;
   
-  @QueryParam(defaultValue: '1')
+  // 查询参数 - 可选参数成为查询参数
   final int page;
-  
-  @QueryParam(name: 'sort_by')
   final String? sortBy;
-  
-  @BodyParam()
-  final SearchFilter? filter;
   
   const SearchPage({
     super.key,
-    this.category,
+    required this.category,
     this.page = 1,
     this.sortBy,
-    this.filter,
   });
+}
+
+// 导航时使用：
+// context.pushSearch(category: 'books', page: 2, sortBy: 'price');
+// 生成 URL: /search/books?page=2&sortBy=price
+```
+
+### Body 参数（复杂类型）
+
+使用 `arguments` 传递复杂对象：
+
+```dart
+@DashRoute(
+  path: '/checkout',
+  arguments: [UserData, Product],  // Record 类型: (UserData, Product)
+)
+class CheckoutPage extends StatelessWidget {
+  const CheckoutPage({super.key});
+  
+  @override
+  Widget build(BuildContext context) {
+    // 通过生成的扩展进行类型安全访问
+    final (user, product) = context.route.arguments;
+    return Text(user.name);
+  }
 }
 ```
 
-### @ShellRoute
+### Shell 路由
 
-定义用于嵌套导航的 shell 路由：
+使用 `shell: true` 定义用于嵌套导航的 shell 路由：
 
 ```dart
-@ShellRoute(path: '/app')
+@DashRoute(path: '/app', shell: true)
 class AppShell extends StatelessWidget {
   final Widget child;
   const AppShell({super.key, required this.child});
-  // ...
+  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: child,
+      bottomNavigationBar: const MyNavBar(),
+    );
+  }
 }
 ```
 
-### @InitialRoute
+### 初始路由
 
-标记为初始路由：
+使用 `initial: true` 标记为初始路由：
 
 ```dart
-@InitialRoute()
-@DashRoute(path: '/')
+@DashRoute(path: '/', initial: true)
 class HomePage extends StatelessWidget { ... }
 ```
 
-### @RedirectRoute
+### 重定向路由
 
-定义路由重定向：
+使用 `redirectTo` 定义路由重定向：
 
 ```dart
-@RedirectRoute(from: '/old-path', to: '/new-path')
+@DashRoute(path: '/old-path', redirectTo: '/new-path')
 class OldPageRedirect {}
+
+// 永久重定向
+@DashRoute(path: '/legacy', redirectTo: '/modern', permanentRedirect: true)
+class LegacyRedirect {}
+```
+
+### 全屏对话框路由
+
+使用 `fullscreenDialog: true` 定义全屏对话框路由：
+
+```dart
+@DashRoute(
+  path: '/edit-profile',
+  fullscreenDialog: true,
+  transition: DashSlideTransition.bottom(),
+)
+class EditProfilePage extends StatelessWidget { ... }
+```
+
+### @IgnoreParam
+
+从路由参数中排除构造函数参数：
+
+```dart
+@DashRoute(path: '/user/:id')
+class UserPage extends StatelessWidget {
+  final String id;
+  
+  @IgnoreParam()
+  final VoidCallback? onTap;  // 不是路由参数
+  
+  const UserPage({
+    super.key,
+    required this.id,
+    this.onTap,
+  });
+}
 ```
 
 ## 转场动画

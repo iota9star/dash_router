@@ -8,7 +8,7 @@ Annotation definitions for the dash_router routing library. This package provide
 ## Features
 
 - 📝 **Route Annotations** - Define routes with `@DashRoute` and related annotations
-- 🎯 **Parameter Annotations** - Type-safe parameter definitions with `@PathParam`, `@QueryParam`, `@BodyParam`
+- 🎯 **Automatic Parameter Inference** - Parameters are automatically inferred from constructor
 - 🎨 **Transition Definitions** - Built-in transition classes for route animations
 - ⚙️ **Configuration** - `@DashRouterConfig` for code generation settings
 
@@ -25,18 +25,27 @@ dependencies:
 
 ### @DashRoute
 
-Define a route for a page widget:
+Define a route for a page widget. Parameters are automatically inferred from the constructor:
+- Path parameters from `:param` patterns in path
+- Query parameters from optional constructor parameters
+- Body parameters via `arguments` property
 
 ```dart
 @DashRoute(
   path: '/user/:id',
   transition: CupertinoTransition(),
-  guards: [AuthGuard],
-  middleware: [LoggingMiddleware],
+  guards: [AuthGuard()],
+  middleware: [LoggingMiddleware()],
 )
 class UserPage extends StatelessWidget {
-  final String id;
-  const UserPage({super.key, required this.id});
+  final String id;         // Path parameter (from :id)
+  final String? tab;       // Query parameter (optional)
+  
+  const UserPage({
+    super.key,
+    required this.id,
+    this.tab,
+  });
   // ...
 }
 ```
@@ -48,68 +57,132 @@ Configure the route generator:
 ```dart
 @DashRouterConfig(
   generateNavigation: true,
-  generateTypedRoutes: true,
+  generateRouteInfo: true,
 )
 class AppRouter {}
 ```
 
-### Parameter Annotations
+### Parameter Handling
+
+Parameters are **automatically inferred** from constructor parameters:
 
 ```dart
-@DashRoute(path: '/search')
+@DashRoute(path: '/search/:category')
 class SearchPage extends StatelessWidget {
-  @PathParam()
-  final String? category;
+  // Path parameter - matches :category in path
+  final String category;
   
-  @QueryParam(defaultValue: '1')
+  // Query parameters - optional parameters become query params
   final int page;
-  
-  @QueryParam(name: 'sort_by')
   final String? sortBy;
-  
-  @BodyParam()
-  final SearchFilter? filter;
   
   const SearchPage({
     super.key,
-    this.category,
+    required this.category,
     this.page = 1,
     this.sortBy,
-    this.filter,
   });
+}
+
+// Navigate with:
+// context.pushSearch(category: 'books', page: 2, sortBy: 'price');
+// Generates URL: /search/books?page=2&sortBy=price
+```
+
+### Body Parameters (Complex Types)
+
+Use `arguments` for passing complex objects:
+
+```dart
+@DashRoute(
+  path: '/checkout',
+  arguments: [UserData, Product],  // Record type: (UserData, Product)
+)
+class CheckoutPage extends StatelessWidget {
+  const CheckoutPage({super.key});
+  
+  @override
+  Widget build(BuildContext context) {
+    // Type-safe access via generated extension
+    final (user, product) = context.route.arguments;
+    return Text(user.name);
+  }
 }
 ```
 
-### @ShellRoute
+### Shell Routes
 
-Define a shell route for nested navigation:
+Define a shell route for nested navigation using `shell: true`:
 
 ```dart
-@ShellRoute(path: '/app')
+@DashRoute(path: '/app', shell: true)
 class AppShell extends StatelessWidget {
   final Widget child;
   const AppShell({super.key, required this.child});
-  // ...
+  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: child,
+      bottomNavigationBar: const MyNavBar(),
+    );
+  }
 }
 ```
 
-### @InitialRoute
+### Initial Routes
 
-Mark a route as the initial route:
+Mark a route as the initial route using `initial: true`:
 
 ```dart
-@InitialRoute()
-@DashRoute(path: '/')
+@DashRoute(path: '/', initial: true)
 class HomePage extends StatelessWidget { ... }
 ```
 
-### @RedirectRoute
+### Redirect Routes
 
-Define a route redirect:
+Define a route redirect using `redirectTo`:
 
 ```dart
-@RedirectRoute(from: '/old-path', to: '/new-path')
+@DashRoute(path: '/old-path', redirectTo: '/new-path')
 class OldPageRedirect {}
+
+// Permanent redirect
+@DashRoute(path: '/legacy', redirectTo: '/modern', permanentRedirect: true)
+class LegacyRedirect {}
+```
+
+### Fullscreen Dialog Routes
+
+Define a fullscreen dialog route using `fullscreenDialog: true`:
+
+```dart
+@DashRoute(
+  path: '/edit-profile',
+  fullscreenDialog: true,
+  transition: DashSlideTransition.bottom(),
+)
+class EditProfilePage extends StatelessWidget { ... }
+```
+
+### @IgnoreParam
+
+Exclude a constructor parameter from route parameters:
+
+```dart
+@DashRoute(path: '/user/:id')
+class UserPage extends StatelessWidget {
+  final String id;
+  
+  @IgnoreParam()
+  final VoidCallback? onTap;  // Not a route parameter
+  
+  const UserPage({
+    super.key,
+    required this.id,
+    this.onTap,
+  });
+}
 ```
 
 ## Transitions

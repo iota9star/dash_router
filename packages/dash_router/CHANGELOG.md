@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2025-12-14
+
+### Fixed
+
+- Fixed documentation errors with incorrect API references
+- Corrected parameter access examples in README (use `route.body.arguments` instead of direct cast)
+- Updated route guard and middleware documentation to reflect instance-based usage
+- Removed references to non-existent `@PathParam`, `@QueryParam`, `@BodyParam` annotations
+- Fixed `DashRouteScope.of()` to throw `StateError` instead of using assert for better error handling
+
+### Changed
+
+- Extracted shared `matchGlobPattern` utility to `RouteUtils` class for code deduplication
+- Improved dispose method to properly clean up internal state
+- Unified route annotation API - all route types (shell, redirect, dialog, initial) now use `@DashRoute` with appropriate properties
+
+### Documentation
+
+- Added comprehensive examples for shell routes with `shell: true`
+- Added examples for fullscreen dialog routes with `fullscreenDialog: true`
+- Added examples for redirect routes with `redirectTo`
+- Updated example project with `EditProfilePage` demonstrating fullscreen dialog
+- Improved README with all unified DashRoute usage patterns
+
 ## [1.0.0] - 2025-12-13
 
 ### Added

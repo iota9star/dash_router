@@ -254,7 +254,29 @@ context.push(AppAdminSettingsRoute());''',
           ),
           _buildSection(
             context,
-            title: '8. Complex Body Parameters',
+            title: '8. Fullscreen Dialog Routes',
+            description: 'Routes that behave as modal dialogs',
+            children: [
+              _DemoButton(
+                title: 'Edit Profile (Fullscreen Dialog)',
+                code: '''
+// Route definition:
+@DashRoute(
+  path: '/app/edit-profile',
+  fullscreenDialog: true,
+  transition: DashSlideTransition.bottom(),
+)
+class EditProfilePage extends StatelessWidget { ... }
+
+// Navigation:
+context.push(AppEditProfileRoute());''',
+                onTap: () => context.push(const AppEditProfileRoute()),
+              ),
+            ],
+          ),
+          _buildSection(
+            context,
+            title: '9. Complex Body Parameters',
             description: 'Record types with multiple elements',
             children: [
               _DemoButton(
