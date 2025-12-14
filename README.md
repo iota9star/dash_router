@@ -6,8 +6,6 @@
 
 <p align="center">
   <a href="https://pub.dev/packages/dash_router"><img src="https://img.shields.io/pub/v/dash_router.svg" alt="Pub Version"></a>
-  <a href="https://github.com/iota9star/dash_router/actions"><img src="https://github.com/iota9star/dash_router/workflows/CI/badge.svg" alt="Build Status"></a>
-  <a href="https://codecov.io/gh/iota9star/dash_router"><img src="https://codecov.io/gh/iota9star/dash_router/branch/main/graph/badge.svg" alt="Coverage"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
 </p>
 
