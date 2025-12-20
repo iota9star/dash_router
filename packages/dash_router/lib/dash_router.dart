@@ -55,6 +55,7 @@ export 'src/navigation/navigation_manager.dart';
 export 'src/navigation/navigation_result.dart';
 export 'src/navigation/navigation_config.dart';
 export 'src/navigation/nested_navigator.dart';
+export 'src/navigation/router_widget.dart';
 
 // Route Info (core feature - InheritedWidget based)
 export 'src/route_info/route_scope.dart';

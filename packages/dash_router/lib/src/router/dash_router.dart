@@ -1294,17 +1294,54 @@ class DashRouter extends ChangeNotifier {
   }
 }
 
-/// Router delegate implementation
+/// Router delegate implementation for Navigator 2.0.
+///
+/// This delegate manages the navigation state and integrates with the
+/// [Router] widget to provide declarative navigation support.
+///
+/// ## Features
+///
+/// - Full Navigator 2.0 support with declarative routing
+/// - System back button handling via [PopNavigatorRouterDelegateMixin]
+/// - URL synchronization with browser history
+/// - Deep linking support
+///
+/// ## Usage
+///
+/// The delegate is typically created via [DashRouter.buildDelegate]:
+///
+/// ```dart
+/// MaterialApp.router(
+///   routerDelegate: router.buildDelegate(),
+///   routeInformationParser: router.buildParser(),
+/// )
+/// ```
 class _DashRouterDelegate extends RouterDelegate<Object>
     with ChangeNotifier, PopNavigatorRouterDelegateMixin<Object> {
   final DashRouter router;
 
+  /// The current route path being displayed.
+  String? _currentPath;
+
   _DashRouterDelegate(this.router) {
-    router.addListener(notifyListeners);
+    router.addListener(_onRouterChanged);
+    _currentPath = router.config.initialPath;
+  }
+
+  void _onRouterChanged() {
+    // Update current path from router state
+    final currentRoute = router.currentRoute;
+    if (currentRoute != null) {
+      _currentPath = currentRoute.fullPath;
+    }
+    notifyListeners();
   }
 
   @override
   GlobalKey<NavigatorState> get navigatorKey => router.navigatorKey;
+
+  @override
+  Object get currentConfiguration => _currentPath ?? router.config.initialPath;
 
   @override
   Widget build(BuildContext context) {
@@ -1313,6 +1350,15 @@ class _DashRouterDelegate extends RouterDelegate<Object>
       initialRoute: router.config.initialPath,
       onGenerateRoute: router.generateRoute,
       observers: [
+        _NavigatorObserverAdapter(
+          onRouteChanged: (route) {
+            // Update current path when route changes
+            if (route?.settings.name != null) {
+              _currentPath = route!.settings.name;
+              notifyListeners();
+            }
+          },
+        ),
         ...router.observers.all,
         ...router.config.observers,
       ],
@@ -1321,11 +1367,80 @@ class _DashRouterDelegate extends RouterDelegate<Object>
 
   @override
   Future<void> setNewRoutePath(Object configuration) async {
-    // Handle route information updates
+    if (configuration is String && configuration != _currentPath) {
+      _currentPath = configuration;
+      // Navigate to the new path
+      await router.pushNamed(configuration);
+    }
+  }
+
+  @override
+  Future<bool> popRoute() async {
+    // First check if we can pop from nested navigators
+    if (router.canPop()) {
+      router.pop();
+      return true;
+    }
+    return super.popRoute();
+  }
+
+  @override
+  void dispose() {
+    router.removeListener(_onRouterChanged);
+    super.dispose();
   }
 }
 
-/// Route information parser
+/// Navigator observer adapter to track route changes.
+class _NavigatorObserverAdapter extends NavigatorObserver {
+  final void Function(Route<dynamic>? route) onRouteChanged;
+
+  _NavigatorObserverAdapter({required this.onRouteChanged});
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    super.didPush(route, previousRoute);
+    onRouteChanged(route);
+  }
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    super.didPop(route, previousRoute);
+    onRouteChanged(previousRoute);
+  }
+
+  @override
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
+    super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
+    onRouteChanged(newRoute);
+  }
+
+  @override
+  void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    super.didRemove(route, previousRoute);
+    onRouteChanged(previousRoute);
+  }
+}
+
+/// Route information parser for Navigator 2.0.
+///
+/// This parser converts between [RouteInformation] (URL) and route
+/// configuration objects for the [Router] widget.
+///
+/// ## Features
+///
+/// - Parses incoming URLs to route configurations
+/// - Restores URLs from route configurations for browser history
+/// - Handles query parameters and fragments
+///
+/// ## Usage
+///
+/// ```dart
+/// MaterialApp.router(
+///   routeInformationParser: router.buildParser(),
+///   routerDelegate: router.buildDelegate(),
+/// )
+/// ```
 class _DashRouteInformationParser extends RouteInformationParser<Object> {
   final DashRouter router;
 
@@ -1335,7 +1450,14 @@ class _DashRouteInformationParser extends RouteInformationParser<Object> {
   Future<Object> parseRouteInformation(
     RouteInformation routeInformation,
   ) async {
-    return routeInformation.uri.toString();
+    final uri = routeInformation.uri;
+    final path = uri.path.isEmpty ? '/' : uri.path;
+
+    // Build full path with query parameters
+    if (uri.hasQuery) {
+      return '$path?${uri.query}';
+    }
+    return path;
   }
 
   @override
@@ -1343,6 +1465,6 @@ class _DashRouteInformationParser extends RouteInformationParser<Object> {
     if (configuration is String) {
       return RouteInformation(uri: Uri.parse(configuration));
     }
-    return RouteInformation(uri: Uri.parse('/'));
+    return RouteInformation(uri: Uri.parse(router.config.initialPath));
   }
 }

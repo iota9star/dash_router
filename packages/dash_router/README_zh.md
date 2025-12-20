@@ -13,6 +13,8 @@ Flutter 应用的核心路由库。提供类型安全的导航、路由守卫、
 - 🛡️ **路由守卫** - 认证和授权保护
 - 🔌 **中间件** - 日志、分析和横切关注点
 - 📱 **跨平台** - 支持 iOS、Android、Web、macOS、Windows、Linux
+- 🔗 **深度链接** - 完整支持应用链接和 Web URL
+- 🧭 **Navigator 1.0 & 2.0** - 兼容两种导航 API
 
 ## 安装
 
@@ -20,12 +22,12 @@ Flutter 应用的核心路由库。提供类型安全的导航、路由守卫、
 
 ```yaml
 dependencies:
-  dash_router: ^1.0.0
+  dash_router: any
 ```
 
 ## 使用
 
-### 基本设置
+### Navigator 1.0 设置（推荐用于简单应用）
 
 ```dart
 import 'package:dash_router/dash_router.dart';
@@ -47,6 +49,40 @@ class MyApp extends StatelessWidget {
       navigatorKey: _router.navigatorKey,
       initialRoute: _router.config.initialPath,
       onGenerateRoute: _router.generateRoute,
+      navigatorObservers: [
+        ..._router.observers.all,
+        ..._router.config.observers,
+      ],
+    );
+  }
+}
+```
+
+### Navigator 2.0 设置（完整的深度链接支持）
+
+```dart
+import 'package:dash_router/dash_router.dart';
+import 'generated/routes.dart';
+
+class MyApp extends StatelessWidget {
+  static final _router = DashRouter(
+    config: DashRouterOptions(
+      initialPath: '/',
+      debugLog: true,
+    ),
+    routes: generatedRoutes,
+    redirects: generatedRedirects,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp.router(
+      routerConfig: _router.routerConfig,
+      // routerConfig 提供：
+      // - routerDelegate
+      // - routeInformationParser
+      // - backButtonDispatcher
+      // - routeInformationProvider
     );
   }
 }
@@ -168,6 +204,27 @@ class AnalyticsMiddleware extends DashMiddleware {
 
 // 注册
 router.middleware.register(AnalyticsMiddleware(analytics));
+```
+
+### Shell 路由（嵌套导航）
+
+Shell 路由为子路由提供包装器，适用于持久 UI 如底部导航栏：
+
+```dart
+@DashRoute(path: '/app', shell: true)
+class AppShell extends StatelessWidget {
+  const AppShell({super.key, required this.child});
+  
+  final Widget child;
+  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: child,
+      bottomNavigationBar: const BottomNavBar(),
+    );
+  }
+}
 ```
 
 ## API 参考

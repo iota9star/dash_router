@@ -19,7 +19,7 @@ dash_router 路由库的命令行工具。提供代码生成、配置管理和�
 
 ```yaml
 dev_dependencies:
-  dash_router_cli: ^1.0.0
+  dash_router_cli: any
 ```
 
 ## 命令

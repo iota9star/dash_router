@@ -27,6 +27,15 @@
 - ✅ **Rich Transitions** - Built-in Material, Cupertino, and custom animations (all `const` supported)
 - ✅ **Route Guards** - Flexible permission control and authentication protection
 - ✅ **Middleware Support** - Logging, analytics, rate limiting, and other cross-cutting concerns
+- ✅ **Navigator 1.0 & 2.0 Support** - Full declarative navigation with `MaterialApp.router`
+  - Added `DashRouterWidget` for simplified router setup
+  - Added `DashRouterScope` for accessing router from widget tree
+  - Enhanced URL synchronization and browser history integration
+- ✅ **Deep Linking** - Complete URL handling for web and mobile platforms
+  - Browser history integration on web
+  - System back button handling
+  - Full support for app links and web URLs
+- ✅ **Shell Routes** - Nested navigation with isolated animations
 - ✅ **Code Generation** - Auto-generate type-safe navigation extensions
 - ✅ **CLI Tools** - Convenient command-line utilities
 - ✅ **Cross-Platform** - iOS, Android, Web, macOS, Windows, Linux
@@ -37,12 +46,12 @@
 
 ```yaml
 dependencies:
-  dash_router: ^1.0.0
-  dash_router_annotations: ^1.0.0
+  dash_router: any
+  dash_router_annotations: any
 
 dev_dependencies:
-  dash_router_cli: ^1.0.0
-  dash_router_generator: ^1.0.0
+  dash_router_cli: any
+  dash_router_generator: any
 ```
 
 ### 2. Define Routes

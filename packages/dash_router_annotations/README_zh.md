@@ -18,7 +18,7 @@ dash_router 路由库的注解定义。此包提供用于定义路由和配置�
 
 ```yaml
 dependencies:
-  dash_router_annotations: ^1.0.0
+  dash_router_annotations: any
 ```
 
 ## 注解

@@ -18,7 +18,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  dash_router_annotations: ^1.0.0
+  dash_router_annotations: any
 ```
 
 ## Annotations

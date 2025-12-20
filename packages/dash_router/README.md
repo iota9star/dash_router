@@ -13,6 +13,8 @@ The core routing library for Flutter applications. Provides type-safe navigation
 - 🛡️ **Route Guards** - Authentication and authorization protection
 - 🔌 **Middleware** - Logging, analytics, and cross-cutting concerns
 - 📱 **Cross-Platform** - Works on iOS, Android, Web, macOS, Windows, Linux
+- 🔗 **Deep Linking** - Full support for app links and web URLs
+- 🧭 **Navigator 1.0 & 2.0** - Compatible with both navigation APIs
 
 ## Installation
 
@@ -20,12 +22,12 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  dash_router: ^1.0.0
+  dash_router: any
 ```
 
 ## Usage
 
-### Basic Setup
+### Navigator 1.0 Setup (Recommended for Simple Apps)
 
 ```dart
 import 'package:dash_router/dash_router.dart';
@@ -47,6 +49,40 @@ class MyApp extends StatelessWidget {
       navigatorKey: _router.navigatorKey,
       initialRoute: _router.config.initialPath,
       onGenerateRoute: _router.generateRoute,
+      navigatorObservers: [
+        ..._router.observers.all,
+        ..._router.config.observers,
+      ],
+    );
+  }
+}
+```
+
+### Navigator 2.0 Setup (Full Deep Linking Support)
+
+```dart
+import 'package:dash_router/dash_router.dart';
+import 'generated/routes.dart';
+
+class MyApp extends StatelessWidget {
+  static final _router = DashRouter(
+    config: DashRouterOptions(
+      initialPath: '/',
+      debugLog: true,
+    ),
+    routes: generatedRoutes,
+    redirects: generatedRedirects,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp.router(
+      routerConfig: _router.routerConfig,
+      // The routerConfig provides:
+      // - routerDelegate
+      // - routeInformationParser
+      // - backButtonDispatcher
+      // - routeInformationProvider
     );
   }
 }
@@ -168,6 +204,27 @@ class AnalyticsMiddleware extends DashMiddleware {
 
 // Register
 router.middleware.register(AnalyticsMiddleware(analytics));
+```
+
+### Shell Routes (Nested Navigation)
+
+Shell routes provide a wrapper around child routes, useful for persistent UI like bottom navigation bars:
+
+```dart
+@DashRoute(path: '/app', shell: true)
+class AppShell extends StatelessWidget {
+  const AppShell({super.key, required this.child});
+  
+  final Widget child;
+  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: child,
+      bottomNavigationBar: const BottomNavBar(),
+    );
+  }
+}
 ```
 
 ## API Reference

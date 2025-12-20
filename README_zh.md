@@ -27,6 +27,15 @@
 - ✅ **丰富的转场动画** - 内置 Material、Cupertino 及自定义动画（全部支持 `const`）
 - ✅ **路由守卫** - 灵活的权限控制和认证保护
 - ✅ **中间件支持** - 日志、分析、限流等横切关注点
+- ✅ **Navigator 1.0 & 2.0 支持** - 完整的声明式导航，支持 `MaterialApp.router`
+  - 添加 `DashRouterWidget` 简化路由器设置
+  - 添加 `DashRouterScope` 从组件树访问路由器
+  - 增强 URL 同步和浏览器历史集成
+- ✅ **深度链接** - 完整的 URL 处理，支持 Web 和移动平台
+  - Web 浏览器历史集成
+  - 系统返回按钮处理
+  - 完整支持应用链接和 Web URL
+- ✅ **Shell 路由** - 嵌套导航，具有独立动画
 - ✅ **代码生成** - 自动生成类型安全的导航扩展
 - ✅ **CLI 工具** - 便捷的命令行工具
 - ✅ **全平台支持** - iOS、Android、Web、macOS、Windows、Linux
@@ -37,12 +46,12 @@
 
 ```yaml
 dependencies:
-  dash_router: ^1.0.0
-  dash_router_annotations: ^1.0.0
+  dash_router: any
+  dash_router_annotations: any
 
 dev_dependencies:
-  dash_router_cli: ^1.0.0
-  dash_router_generator: ^1.0.0
+  dash_router_cli: any
+  dash_router_generator: any
 ```
 
 ### 2. 定义路由

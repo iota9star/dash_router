@@ -19,8 +19,8 @@ dash_router 的代码生成器。从 `@DashRoute` 注解生成类型安全的路
 
 ```yaml
 dev_dependencies:
-  dash_router_generator: ^1.0.0
-  dash_router_cli: ^1.0.0
+  dash_router_generator: any
+  dash_router_cli: any
 ```
 
 ## 使用

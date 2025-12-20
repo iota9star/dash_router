@@ -19,7 +19,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dev_dependencies:
-  dash_router_cli: ^1.0.0
+  dash_router_cli: any
 ```
 
 ## Commands

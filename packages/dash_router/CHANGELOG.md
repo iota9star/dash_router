@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-12-20
+
+### Added
+
+- **Navigator 2.0 Support**: Full declarative navigation support with `MaterialApp.router`
+  - Added `DashRouterWidget` for simplified router setup
+  - Added `DashRouterScope` for accessing router from widget tree
+  - Added `routerConfig` extension for convenient `MaterialApp.router` integration
+  - Enhanced `_DashRouterDelegate` with proper URL synchronization
+  - Enhanced `_DashRouteInformationParser` with query parameter support
+  - Added `_NavigatorObserverAdapter` for tracking route changes
+- **Deep Linking**: Complete URL handling for web and mobile platforms
+  - Browser history integration on web
+  - System back button handling via `PopNavigatorRouterDelegateMixin`
+  - `BackButtonDispatcher` support for Android hardware back button
+- New exports in `dash_router.dart`:
+  - `src/navigation/router_widget.dart`
+
+### Changed
+
+- Improved documentation with Navigator 1.0 and 2.0 usage examples
+- Updated README with deep linking and shell routes documentation
+- Removed deprecated `onPopPage` callback in favor of modern Navigator API
+
+### Documentation
+
+- Added comprehensive Navigator 2.0 setup guide
+- Added shell routes usage examples
+- Updated installation version to ^1.1.0
+
 ## [1.0.1] - 2025-12-14
 
 ### Fixed
