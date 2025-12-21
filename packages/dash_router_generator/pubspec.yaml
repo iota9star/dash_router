@@ -1,6 +1,6 @@
 name: dash_router_generator
 description: Code generator for dash_router - generates type-safe route code from annotations.
-version: 1.1.0
+version: 1.1.1
 homepage: https://github.com/iota9star/dash_router
 repository: https://github.com/iota9star/dash_router
 issue_tracker: https://github.com/iota9star/dash_router/issues

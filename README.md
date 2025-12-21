@@ -412,7 +412,7 @@ dash_router/
 - **O(1) Parameter Access**: InheritedWidget + caching mechanism
 - **Lazy Loading**: Route info created on demand
 - **Compile-time Optimization**: Code generation with zero runtime overhead
-- **LRU Cache**: Smart navigation history management
+- **History Management**: Smart navigation history with size limits
 
 ## Examples
 
