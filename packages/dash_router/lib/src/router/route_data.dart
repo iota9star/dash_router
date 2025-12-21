@@ -6,42 +6,105 @@ import '../guards/guard.dart';
 import '../middleware/middleware.dart';
 import '../params/params_types.dart';
 
-/// Data associated with a route entry
+/// Data associated with a route entry.
+///
+/// Contains comprehensive information about the current route including the path,
+/// parameters, metadata, and navigation settings. This data is available
+/// throughout the widget tree via [DashRouteScope].
+///
+/// ## Example
+///
+/// ```dart
+/// class UserPage extends StatelessWidget {
+///   @override
+///   Widget build(BuildContext context) {
+///     final route = context.route;
+///     final userId = route.params.path['id'];
+///     final tab = route.params.query['tab'];
+///     
+///     return Column(
+///       children: [
+///         Text('User ID: $userId'),
+///         Text('Tab: $tab'),
+///         Text('Path: ${route.path}'),
+///         Text('Full path: ${route.fullPath}'),
+///       ],
+///     );
+///   }
+/// }
+/// ```
 class RouteData {
-  /// The route path pattern (e.g., '/user/:id')
+  /// The route path pattern used for matching (e.g., '/user/:id').
+  ///
+  /// This is the pattern from the route definition, not the actual path.
+  /// For example, when navigating to '/user/123', the pattern would be '/user/:id'.
   final String pattern;
 
-  /// The actual matched path (e.g., '/user/123')
+  /// The actual matched path without query parameters (e.g., '/user/123').
+  ///
+  /// This is the normalized path that was matched against the pattern.
+  /// It doesn't include query parameters or fragments.
   final String path;
 
-  /// The full URL including query string
+  /// The full URL including path, query parameters, and fragments.
+  ///
+  /// This includes everything after the domain name, including query string.
+  /// For example: '/user/123?tab=profile&edit=true#section'
   final String fullPath;
 
-  /// Route name
+  /// Optional human-readable name for this route.
+  ///
+  /// Can be set in route definition or auto-generated from class name.
+  /// Used for named navigation and debugging.
   final String name;
 
-  /// Route parameters
+  /// Route parameters containing path, query, and body parameters.
+  ///
+  /// Provides type-safe access to all parameters passed to this route.
+  /// Path parameters come from URL segments, query from URL query string,
+  /// and body from navigation arguments.
   final RouteParams params;
 
-  /// Route settings
+  /// Flutter RouteSettings associated with this route.
+  ///
+  /// Contains standard Flutter navigation settings and can be used
+  /// for integration with other navigation systems.
   final RouteSettings? settings;
 
-  /// Whether this is the initial route
+  /// Whether this route is the app's initial/home route.
+  ///
+  /// Only one route should be marked as initial. This route is
+  /// displayed when the app first starts or when navigating to root.
   final bool isInitial;
 
-  /// Parent route pattern (for nested routes)
+  /// Parent route pattern for nested routing.
+  ///
+  /// Set when this route is a child of a shell route. Used for
+  /// building nested navigation hierarchy and for parent-child relationships.
   final String? parentPattern;
 
-  /// Child routes patterns
+  /// List of child route patterns for nested routing.
+  ///
+  /// Contains patterns of all routes that have this route as parent.
+  /// Used for building navigation hierarchy and for checking child availability.
   final List<String> childPatterns;
 
-  /// Route metadata
+  /// Custom metadata associated with this route.
+  ///
+  /// Arbitrary key-value pairs defined in route annotation.
+  /// Useful for storing route-specific information like permissions,
+  /// titles, icons, or other custom data.
   final Map<String, dynamic> metadata;
 
-  /// Timestamp when this route was created
+  /// Timestamp when this route data was created.
+  ///
+  /// Useful for debugging, analytics, or tracking route lifetime.
   final DateTime createdAt;
 
-  /// Unique identifier for this route entry
+  /// Unique identifier for this route entry.
+  ///
+  /// Auto-generated unique ID that can be used to track specific
+  /// route instances, useful for debugging and analytics.
   final String id;
 
   RouteData({

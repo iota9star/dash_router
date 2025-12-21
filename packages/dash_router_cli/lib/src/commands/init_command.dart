@@ -4,14 +4,37 @@ import 'package:args/command_runner.dart';
 
 import '../utils/logger.dart';
 
-/// Command for initializing dash_router configuration
+/// Command for initializing dash_router configuration file.
+///
+/// This command creates a default configuration file
+/// with recommended settings for Dash Router projects.
+///
+/// ## Example
+///
+/// ```bash
+/// # Initialize with default settings
+/// dash_router init
+///
+/// # Initialize with custom output path
+/// dash_router init --output config/dash_router.yaml
+///
+/// # Force overwrite existing config
+/// dash_router init --force
+/// ```
 class InitCommand extends Command<int> {
+  /// Command name used in CLI.
   @override
   final String name = 'init';
 
+  /// Command description shown in help.
   @override
   final String description = 'Initialize dash_router configuration file';
 
+  /// Creates the init command with argument parsers.
+  ///
+  /// Sets up command-line flags and options:
+  /// - `--force, -f`: Overwrite existing configuration
+  /// - `--output, -o`: Custom output file path
   InitCommand() {
     argParser.addFlag(
       'force',
@@ -27,33 +50,47 @@ class InitCommand extends Command<int> {
     );
   }
 
-  @override
-  Future<int> run() async {
-    final force = argResults!['force'] as bool;
-    final output = argResults!['output'] as String;
+  /// Executes the init command.
+    ///
+    /// Creates a default configuration file with all necessary
+    /// settings and directories for a Dash Router project.
+    ///
+    /// Returns 0 on success, 1 on error.
+    ///
+    /// Creates these files/directories:
+    /// - Configuration file with recommended settings
+    /// - Guides users through next steps
+    ///
+    /// Error handling:
+    /// - Warns if config file exists (unless --force)
+    /// - Catches and reports file system errors
+    @override
+    Future<int> run() async {
+      final force = argResults!['force'] as bool;
+      final output = argResults!['output'] as String;
 
-    final configFile = File(output);
+      final configFile = File(output);
 
-    if (configFile.existsSync() && !force) {
-      Logger.error('Configuration file already exists: $output');
-      Logger.info('Use --force to overwrite');
-      return 1;
+      if (configFile.existsSync() && !force) {
+        Logger.error('Configuration file already exists: $output');
+        Logger.info('Use --force to overwrite');
+        return 1;
+      }
+
+      try {
+        await configFile.writeAsString(_defaultConfig);
+        Logger.success('Created configuration file: $output');
+        Logger.info('');
+        Logger.info('Next steps:');
+        Logger.info('  1. Edit $output to configure your routes');
+        Logger.info('  2. Add @DashRoute annotations to your page classes');
+        Logger.info('  3. Run "dash_router generate" to generate routes');
+        return 0;
+      } catch (e) {
+        Logger.error('Failed to create configuration file: $e');
+        return 1;
+      }
     }
-
-    try {
-      await configFile.writeAsString(_defaultConfig);
-      Logger.success('Created configuration file: $output');
-      Logger.info('');
-      Logger.info('Next steps:');
-      Logger.info('  1. Edit $output to configure your routes');
-      Logger.info('  2. Add @DashRoute annotations to your page classes');
-      Logger.info('  3. Run "dash_router generate" to generate routes');
-      return 0;
-    } catch (e) {
-      Logger.error('Failed to create configuration file: $e');
-      return 1;
-    }
-  }
 
   static const _defaultConfig = '''
 # Dash Router Configuration

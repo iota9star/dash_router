@@ -23,57 +23,185 @@ import 'navigation_history.dart';
 import 'route_data.dart';
 import 'router_config.dart';
 
-/// Main router class for dash_router
+/// Main router class for dash_router.
 ///
-/// Usage:
+/// The central router that manages navigation, route matching, guards,
+/// middleware, and nested navigation in your Flutter application.
+///
+/// ## Key Features
+///
+/// - Type-safe navigation with compile-time checking
+/// - Nested navigation with shell routes
+/// - Route guards and middleware for authorization and side-effects
+/// - Deep linking support
+/// - Navigation history management
+/// - Custom transitions
+///
+/// ## Basic Usage
+///
 /// ```dart
+/// // 1. Define routes with annotations
+/// @DashRoute(path: '/user/:id')
+/// class UserPage extends StatelessWidget {
+///   const UserPage({super.key, required this.id});
+///   final String id;
+///
+///   @override
+///   Widget build(BuildContext context) => Text('User: $id');
+/// }
+///
+/// // 2. Initialize router
 /// final router = DashRouter(
-///   config: DashRouterOptions(initialPath: '/'),
-///   routes: generatedRoutes,
+///   config: DashRouterOptions(
+///     initialPath: '/home',
+///     defaultTransition: DashFadeTransition(),
+///   ),
+///   routes: generatedRoutes, // Auto-generated
 /// );
+///
+/// // 3. Use with MaterialApp.router
+/// MaterialApp.router(
+///   routerDelegate: router.buildDelegate(),
+///   routeInformationParser: router.buildParser(),
+/// )
+///
+/// // 4. Navigate
+/// router.pushNamed('/user/123');
+/// // Or with typed navigation:
+/// context.pushUserPage(id: '123');
+/// ```
+///
+/// ## Nested Navigation
+///
+/// ```dart
+/// // Shell route (wrapper)
+/// @ShellRoute(path: '/app')
+/// class AppShell extends StatelessWidget {
+///   const AppShell({super.key, required this.child});
+///   final Widget child;
+///
+///   @override
+///   Widget build(BuildContext context) {
+///     return Scaffold(
+///       body: child,
+///       bottomNavigationBar: BottomNavBar(),
+///     );
+///   }
+/// }
+///
+/// // Child route
+/// @DashRoute(path: '/app/home', parent: '/app')
+/// class HomePage extends StatelessWidget {
+///   const HomePage({super.key});
+///
+///   @override
+///   Widget build(BuildContext context) => Text('Home');
+/// }
+/// ```
+///
+/// ## Guards and Middleware
+///
+/// ```dart
+/// @DashRoute(
+///   path: '/admin',
+///   guards: [AuthGuard, AdminGuard],
+///   middleware: [AnalyticsMiddleware],
+/// )
+/// class AdminPage extends StatelessWidget { ... }
 /// ```
 class DashRouter extends ChangeNotifier {
   static const String _kTransitionArgKey = '_transition';
 
   static const int _kMaxRedirectDepth = 8;
 
-  /// Router configuration
+  /// Router configuration options.
+  ///
+  /// Contains settings like initial path, default transitions, debug logging,
+  /// and other router-wide configurations.
   final DashRouterOptions config;
 
-  /// Registered routes
+  /// Registered routes mapped by normalized path pattern.
+  ///
+  /// Routes are stored with their normalized paths as keys for efficient lookup.
+  /// This map contains all routes available for navigation.
   final Map<String, RouteEntry> _routes = {};
 
-  /// Parent -> child route patterns.
+  /// Parent route pattern to list of child route patterns mapping.
+  ///
+  /// Used for nested navigation and building shell routes. When a route
+  /// specifies a parent, the relationship is tracked here.
   final Map<String, List<String>> _childrenByParentPattern = {};
 
-  /// Registered redirects
+  /// Registered redirect rules.
+  ///
+  /// Redirects are checked before route matching. If a redirect matches,
+  /// navigation is automatically redirected to the target path.
   final List<RedirectEntry> _redirects = [];
 
-  /// Navigation history
+  /// Navigation history manager.
+  ///
+  /// Tracks the navigation stack for back navigation and history access.
+  /// History respects the maximum size configured in [config].
   late final NavigationHistory _history;
 
-  /// Current router state
+  /// Current router state.
+  ///
+  /// Contains information about current route, navigation status, and other
+  /// runtime state that can be observed by widgets.
   RouterState _state;
 
-  /// Guard manager
+  /// Guard manager for route guards.
+  ///
+  /// Guards are executed before navigation and can allow, deny, or redirect
+  /// navigation attempts based on custom conditions.
   final GuardManager _guardManager = GuardManager();
 
-  /// Middleware manager
+  /// Middleware manager for route middleware.
+  ///
+  /// Middleware runs during navigation for cross-cutting concerns like
+  /// logging, analytics, or request modification.
   final MiddlewareManager _middlewareManager = MiddlewareManager();
 
-  /// Observer manager
+  /// Observer manager for navigation observers.
+  ///
+  /// Observers receive notifications about navigation events for debugging,
+  /// analytics, or custom side effects.
   final ObserverManager _observerManager = ObserverManager();
 
-  /// Global navigator key
+  /// Global navigator key for the root navigator.
+  ///
+  /// Used to access the root NavigatorState and for navigation operations.
+  /// Also used by the Router delegate for Navigator 2.0 integration.
   final GlobalKey<NavigatorState> navigatorKey;
 
   /// Nested navigators by shell pattern.
+  ///
+  /// Maps shell route patterns to their nested navigator keys. This enables
+  /// independent navigation within different shell regions.
   final Map<String, GlobalKey<NavigatorState>> _nestedNavigators = {};
 
-  /// Singleton instance
+  /// Singleton instance of the router.
+  ///
+  /// Only one instance can exist at a time. This is accessed through
+  /// [instance] getter for convenience and to avoid context requirements.
   static DashRouter? _instance;
 
-  /// Get singleton instance
+  /// Get the singleton router instance.
+  ///
+  /// Provides access to the router instance from anywhere in the app.
+  /// Throws [RouterNotInitializedException] if the router hasn't been initialized.
+  ///
+  /// ## Example
+  ///
+  /// ```dart
+  /// // Get router instance
+  /// final router = DashRouter.instance;
+  /// 
+  /// // Navigate
+  /// await router.pushNamed('/user/123');
+  /// ```
+  ///
+  /// Throws [RouterNotInitializedException] if router is not initialized.
   static DashRouter get instance {
     if (_instance == null) {
       throw RouterNotInitializedException();
@@ -81,9 +209,55 @@ class DashRouter extends ChangeNotifier {
     return _instance!;
   }
 
-  /// Check if router is initialized
+  /// Check if the router has been initialized.
+  ///
+  /// Returns true if a [DashRouter] instance exists and is ready for use.
+  /// This is useful for checking router availability before accessing [instance].
+  ///
+  /// ## Example
+  ///
+  /// ```dart
+  /// if (DashRouter.isInitialized) {
+  ///   final router = DashRouter.instance;
+  ///   await router.pushNamed('/home');
+  /// }
+  /// ```
   static bool get isInitialized => _instance != null;
 
+  /// Creates a new [DashRouter] instance.
+  ///
+  /// The constructor sets up the router with the provided configuration,
+  /// registers routes and redirects, and initializes all internal managers.
+  /// Only one instance can exist at a time due to singleton pattern.
+  ///
+  /// ## Parameters
+  ///
+  /// - [config] - Router configuration options (required)
+  /// - [routes] - Initial list of routes to register (optional)
+  /// - [redirects] - Initial list of redirects to register (optional)
+  /// - [navigatorKey] - Custom navigator key (auto-generated if not provided)
+  ///
+  /// ## Example
+  ///
+  /// ```dart
+  /// final router = DashRouter(
+  ///   config: DashRouterOptions(
+  ///     initialPath: '/home',
+  ///     defaultTransition: DashFadeTransition(),
+  ///     debugLog: kDebugMode,
+  ///   ),
+  ///   routes: [
+  ///     RouteEntry(
+  ///       pattern: '/user/:id',
+  ///       name: 'user',
+  ///       builder: (context, data) => UserPage(id: data.params['id']),
+  ///     ),
+  ///   ],
+  ///   redirects: [
+  ///     RedirectEntry(from: '/old-path', to: '/new-path'),
+  ///   ],
+  /// );
+  /// ```
   DashRouter({
     required this.config,
     List<RouteEntry> routes = const [],

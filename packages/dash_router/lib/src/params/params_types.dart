@@ -1,4 +1,42 @@
-/// Types for route parameters
+/// Types and utilities for route parameters.
+///
+/// This library provides the core parameter handling infrastructure
+/// for Dash Router, including path, query, and body parameters.
+///
+/// ## Parameter Types
+///
+/// - **Path Parameters**: Extracted from URL path segments (e.g., `:id` in `/user/:id`)
+/// - **Query Parameters**: From URL query string (e.g., `?tab=profile` in `/user/:id?tab=profile`)
+/// - **Body Parameters**: Passed programmatically during navigation
+///
+/// ## Example
+///
+/// ```dart
+/// // Define a route with parameters
+/// @DashRoute(path: '/user/:id')
+/// class UserPage extends StatelessWidget {
+///   const UserPage({super.key, required this.id, this.tab = 'profile'});
+///   final String id;          // Path parameter
+///   final String tab;         // Query parameter
+/// }
+///
+/// // Access parameters in widget
+/// class UserPage extends StatelessWidget {
+///   @override
+///   Widget build(BuildContext context) {
+///     final params = context.route.params;
+///     final id = params.path['id'];           // String
+///     final tab = params.query['tab'] ?? 'profile'; // String
+///     
+///     return Column(
+///       children: [
+///         Text('User ID: $id'),
+///         Text('Tab: $tab'),
+///       ],
+///     );
+///   }
+/// }
+/// ```
 library;
 
 /// Represents a path parameter configuration

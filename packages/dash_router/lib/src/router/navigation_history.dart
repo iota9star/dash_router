@@ -1,6 +1,49 @@
 import 'route_data.dart';
 
-/// Navigation history management
+/// Navigation history management for Dash Router.
+///
+/// This class maintains a stack of visited routes, enabling back/forward
+/// navigation, history inspection, and route tracking throughout the app.
+///
+/// ## Features
+///
+/// - **Back/Forward Navigation**: Track position in navigation stack
+/// - **Size Limits**: Automatically trim history to prevent memory issues
+/// - **Route Lookup**: Find routes by path or name
+/// - **Event Listeners**: Get notified of history changes
+///
+/// ## Example
+///
+/// ```dart
+/// class NavigationWidget extends StatelessWidget {
+///   @override
+///   Widget build(BuildContext context) {
+///     final history = DashRouter.instance.history;
+///     
+///     return Column(
+///       children: [
+///         Text('Current: ${history.currentPath}'),
+///         Text('Can go back: ${history.canGoBack}'),
+///         
+///         if (history.canGoBack)
+///           ElevatedButton(
+///             onPressed: () => history.pop(),
+///             child: Text('Back'),
+///           ),
+///             
+///         Text('History (${history.length} routes):'),
+///         ...history.entries.map((route) => Text('  ${route.path}')),
+///       ],
+///     );
+///   }
+/// }
+/// ```
+///
+/// ## Memory Management
+///
+/// The history automatically trims itself to [maxSize] entries to prevent
+/// memory growth in long-running applications. The oldest entries are removed
+/// when the limit is exceeded.
 class NavigationHistory {
   /// Maximum number of entries to keep in history
   final int maxSize;
@@ -16,16 +59,53 @@ class NavigationHistory {
 
   NavigationHistory({this.maxSize = 100});
 
-  /// Get all history entries (newest first)
+  /// Gets all history entries with newest first.
+  ///
+  /// Returns an unmodifiable list to prevent external modification.
+  /// The list maintains the order of navigation visits.
+  ///
+  /// ## Example
+  ///
+  /// ```dart
+  /// final allVisited = history.entries;
+  /// print('Visited ${allVisited.length} routes');
+  /// for (final route in allVisited.take(10)) {
+  ///   print('  ${route.path}');
+  /// }
+  /// ```
   List<RouteData> get entries => List.unmodifiable(_entries);
 
-  /// Get current route
+  /// Gets the currently active route in history.
+  ///
+  /// Returns null if no route is currently selected or if the
+  /// current index is out of bounds (empty history).
+  ///
+  /// ## Example
+  ///
+  /// ```dart
+  /// final current = history.current;
+  /// if (current != null) {
+  ///   print('Currently at: ${current.path}');
+  /// }
+  /// ```
   RouteData? get current =>
       _currentIndex >= 0 && _currentIndex < _entries.length
           ? _entries[_currentIndex]
           : null;
 
-  /// Get previous route
+  /// Gets the previously visited route.
+  ///
+  /// Returns null if there's no previous route (at start of history)
+  /// or if the current route is the first one.
+  ///
+  /// ## Example
+  ///
+  /// ```dart
+  /// final previous = history.previous;
+  /// if (previous != null) {
+  ///   print('Came from: ${previous.path}');
+  /// }
+  /// ```
   RouteData? get previous =>
       _currentIndex > 0 ? _entries[_currentIndex - 1] : null;
 
@@ -51,7 +131,34 @@ class NavigationHistory {
   /// Check if history is not empty
   bool get isNotEmpty => _entries.isNotEmpty;
 
-  /// Push a new entry to history
+  /// Pushes a new route entry to the history.
+  ///
+  /// This method adds a route to the history stack, updating the
+  /// current index and managing memory constraints. Any forward navigation
+  /// history (routes after current position) is automatically cleared.
+  ///
+  /// ## Behavior
+  ///
+  /// - Adds new route as most recent entry
+  /// - Updates current index to point to new entry
+  /// - Removes any forward history entries
+  /// - Automatically trims history to [maxSize] if exceeded
+  /// - Notifies all listeners of the change
+  ///
+  /// ## Example
+  ///
+  /// ```dart
+  /// final route = RouteData(
+  ///   pattern: '/user/:id',
+  ///   path: '/user/123',
+  ///   name: 'userDetail',
+  /// );
+  /// history.push(route);
+  /// print('Current: ${history.currentPath}');
+  /// print('History length: ${history.length}');
+  /// ```
+  ///
+  /// [data] - The route data to add to history
   void push(RouteData data) {
     // Remove forward history if we're not at the end
     if (_currentIndex < _entries.length - 1) {

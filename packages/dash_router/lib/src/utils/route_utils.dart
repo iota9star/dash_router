@@ -2,11 +2,48 @@ import 'package:flutter/material.dart';
 
 import 'route_parser.dart';
 
-/// General route utilities
+/// General route utilities and helper functions.
+///
+/// This class provides static methods for common routing tasks
+/// like path manipulation, naming conventions, and pattern matching.
+///
+/// ## Example
+///
+/// ```dart
+/// class MyWidget extends StatelessWidget {
+///   @override
+///   Widget build(BuildContext context) {
+///     // Convert class name to route name
+///     final routeName = RouteUtils.classNameToRouteName('UserDetailPage');
+///     
+///     // Convert route name to path
+///     final path = RouteUtils.routeNameToPath(routeName);
+///     
+///     // Check if path is child of parent
+///     final isChild = RouteUtils.isChildPath('/user', '/user/123');
+///     
+///     return Text('Route: $path, Child: $isChild');
+///   }
+/// }
+/// ```
 class RouteUtils {
   RouteUtils._();
 
-  /// Generate a unique route key
+  /// Generates a unique route key for caching.
+  ///
+  /// Combines path and parameters to create a unique identifier.
+  /// Useful for caching route widgets or results.
+  ///
+  /// [path] - The route path
+  /// [params] - Optional parameters to include
+  ///
+  /// Example:
+  /// ```dart
+  /// final key = RouteUtils.generateRouteKey(
+  ///   '/user/123',
+  ///   {'tab': 'profile', 'edit': 'true'},
+  /// ); // '/user/123_edit_true_tab_profile'
+  /// ```
   static String generateRouteKey(String path, [Map<String, dynamic>? params]) {
     final buffer = StringBuffer(path);
     if (params != null && params.isNotEmpty) {
@@ -18,8 +55,19 @@ class RouteUtils {
     return buffer.toString();
   }
 
-  /// Convert a class name to a route name
-  /// e.g., 'UserDetailPage' -> 'userDetail'
+  /// Converts a class name to a route name.
+  ///
+  /// Removes common suffixes and converts to camelCase.
+  /// Used for auto-generating route names from widget names.
+  ///
+  /// [className] - The class name to convert
+  ///
+  /// Example:
+  /// ```dart
+  /// RouteUtils.classNameToRouteName('UserDetailPage'); // 'userDetail'
+  /// RouteUtils.classNameToRouteName('SettingsScreen'); // 'settings'
+  /// RouteUtils.classNameToRouteName('LoginView'); // 'login'
+  /// ```
   static String classNameToRouteName(String className) {
     // Remove common suffixes
     var name = className;

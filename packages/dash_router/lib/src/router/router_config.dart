@@ -6,12 +6,30 @@ import '../middleware/middleware.dart';
 import 'navigation_history.dart';
 import 'route_data.dart';
 
-/// Router configuration options.
+/// Comprehensive router configuration options for Dash Router.
 ///
-/// Use this to configure the behavior of [DashRouter].
+/// This class provides all configuration options needed to customize
+/// the behavior, appearance, and functionality of the router instance.
+/// Each option has sensible defaults to get you started quickly.
 ///
-/// Example:
+/// ## Core Configuration
+///
+/// The most commonly used options are:
+/// - [initialPath] - Where navigation starts
+/// - [defaultTransition] - Animation style for routes
+/// - [debugLog] - Enable console logging
+///
+/// ## Advanced Features
+///
+/// - **Deep Linking**: Handle incoming URLs with [enableDeepLinks]
+/// - **Global Guards/Middleware**: Apply security and logging globally
+/// - **State Restoration**: Save/restore navigation state
+/// - **Custom Error Handling**: Handle 404s and navigation errors
+///
+/// ## Example Usage
+///
 /// ```dart
+/// // Basic configuration
 /// final router = DashRouter(
 ///   config: DashRouterOptions(
 ///     initialPath: '/home',
@@ -20,7 +38,49 @@ import 'route_data.dart';
 ///   ),
 ///   routes: generatedRoutes,
 /// );
+///
+/// // Advanced configuration with all features
+/// final router = DashRouter(
+///   config: DashRouterOptions(
+///     initialPath: '/dashboard',
+///     debugLog: kDebugMode,
+///     defaultTransition: DashFadeTransition(),
+///     historyMaxSize: 50,
+///     enableDeepLinks: true,
+///     restorable: true,
+///     restorationId: 'main_router',
+///     globalGuards: const [
+///       AuthGuard(),
+///       LoggingGuard(),
+///     ],
+///     globalMiddleware: const [
+///       AnalyticsMiddleware(),
+///       ErrorReportingMiddleware(),
+///     ],
+///     notFoundBuilder: (context, path) => NotFoundPage(path: path),
+///     errorBuilder: (context, error) => ErrorPage(error: error),
+///     loadingBuilder: (context) => LoadingSpinner(),
+///     observers: [
+///       NavigationObserver(),
+///       RouteAnalyticsObserver(),
+///     ],
+///   ),
+///   routes: generatedRoutes,
+/// );
 /// ```
+///
+/// ## Performance Considerations
+///
+/// - Keep [historyMaxSize] reasonable (default 100) for memory efficiency
+/// - Use [debugLog] only in development builds
+/// - Enable [enableDeepLinks] only if you handle URL schemes
+/// - Configure [observers] sparingly as they affect navigation performance
+///
+/// See also:
+/// - [DashRouter] - The main router class
+/// - [RouteData] - Route data available during navigation
+/// - [DashGuard] - Route guards for security
+/// - [DashMiddleware] - Middleware for cross-cutting concerns
 class DashRouterOptions {
   /// Initial route path.
   ///
@@ -157,10 +217,64 @@ class DashRouterOptions {
   }
 }
 
-/// Current state of the router.
+/// Immutable state representation of the router.
 ///
-/// This class contains information about the current navigation state,
-/// including the current route, navigation history, and pending operations.
+/// This class contains all information about the current navigation state
+/// at a given moment. Router state changes trigger notifications to
+/// listeners and can be used to build reactive UI.
+///
+/// ## State Properties
+///
+/// - **Current Route**: The actively displayed route
+/// - **Navigation History**: Stack of visited routes
+/// - **Operation Status**: Whether navigation is in progress
+/// - **Initialization State**: Whether router is ready for use
+///
+/// ## State Management
+///
+/// Router state is immutable - each change creates a new state instance.
+/// This ensures predictable state updates and enables time-travel debugging.
+///
+/// ## Example Usage
+///
+/// ```dart
+/// class NavigationStatus extends StatelessWidget {
+///   @override
+///   Widget build(BuildContext context) {
+///     final state = DashRouter.instance.state;
+///     
+///     return Column(
+///       children: [
+///         Text('Current: ${state.currentRoute?.path ?? 'None'}'),
+///         Text('History: ${state.history.length} routes'),
+///         Text('Navigating: ${state.isNavigating}'),
+///         
+///         if (state.canGoBack)
+///           ElevatedButton(
+///             onPressed: () => state.history.pop(),
+///             child: Text('Back'),
+///           ),
+///       ],
+///     );
+///   }
+/// }
+/// ```
+///
+/// ## State Changes
+///
+/// Listen to state changes via router's change notifications:
+/// ```dart
+/// final router = DashRouter.instance;
+/// router.addListener(() {
+///   final state = router.state;
+///   print('Route changed to: ${state.currentRoute?.path}');
+/// });
+/// ```
+///
+/// See also:
+/// - [DashRouter] - The main router class
+/// - [NavigationHistory] - Detailed history management
+/// - [RouteData] - Information about current route
 class RouterState {
   /// Current route data.
   final RouteData? currentRoute;

@@ -2,17 +2,58 @@ import 'package:flutter/widgets.dart';
 
 import 'route_context.dart';
 
-/// Route observer for DashRouter
+/// Enhanced route observer for Dash Router.
 ///
-/// Extends NavigatorObserver to provide enhanced route event tracking.
+/// Extends Flutter's NavigatorObserver to provide comprehensive route
+/// event tracking with callbacks for push, pop, replace, and remove operations.
+/// Ideal for analytics, debugging, or custom navigation behavior.
 ///
-/// Example:
+/// ## Features
+///
+/// - **Event Callbacks**: Separate callbacks for each navigation event type
+/// - **Event History**: Maintains a configurable history of events
+/// - **Rich Context**: Access to current and previous routes
+/// - **Logging Support**: Built-in optional logging for debugging
+/// - **Custom Observers**: Pre-built observers for common use cases
+///
+/// ## Example
+///
 /// ```dart
+/// // Basic usage
 /// final observer = DashObserver(
-///   onPush: (context) => print('Pushed: ${context.path}'),
-///   onPop: (context) => print('Popped: ${context.path}'),
+///   onPush: (context) => analytics.trackScreenView(context.path),
+///   onPop: (context) => analytics.trackBackNavigation(),
+///   enableLogging: true,
+/// );
+///
+/// // Advanced usage with custom event handling
+/// final advancedObserver = DashObserver(
+///   onRouteEvent: (event) {
+///     switch (event.type) {
+///       case RouteEventType.push:
+///         logNavigation('Screen opened', event.context.path);
+///       case RouteEventType.pop:
+///         logNavigation('Screen closed', event.context.path);
+///     }
+///   },
+///   maxHistorySize: 50,
 /// );
 /// ```
+///
+/// ## Registration
+///
+/// Register with router:
+/// ```dart
+/// DashRouter.builder()
+///     .addObserver(analyticsObserver)
+///     .addObserver(debugObserver)
+///     .build();
+/// ```
+///
+/// ## Built-in Observers
+///
+/// - [AnalyticsObserver] - Screen view tracking for analytics services
+/// - [DebugObserver] - Simple logging observer for debugging
 class DashObserver extends NavigatorObserver {
   /// Callback for push events
   final void Function(RouteEventContext context)? onPush;

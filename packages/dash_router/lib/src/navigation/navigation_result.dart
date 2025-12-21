@@ -1,16 +1,113 @@
-/// Navigation result types
+/// Comprehensive navigation result types for Dash Router.
+///
+/// This library defines all possible outcomes of navigation operations,
+/// providing type-safe handling of success, failure, cancellation,
+/// and redirection scenarios.
+///
+/// ## Result Types
+///
+/// - **Success**: Navigation completed successfully
+/// - **Cancelled**: Navigation was aborted (by user or guard)
+/// - **Redirected**: Navigation was redirected to another route
+/// - **Failed**: Navigation encountered an error
+/// - **Pending**: Navigation is waiting for async operation
+///
+/// ## Pattern Matching
+///
+/// Use pattern matching or extension methods to handle results:
+/// ```dart
+/// final result = await router.pushNamed('/user/123');
+/// switch (result) {
+///   case NavigationSuccess(value: final value):
+///     print('Navigated successfully: $value');
+///   case NavigationCancelled(reason: final reason):
+///     print('Navigation cancelled: $reason');
+///   case NavigationRedirected(redirectedTo: final to, originalPath: final from):
+///     print('Redirected from $from to $to');
+///   case NavigationFailed(error: final error):
+///     print('Navigation failed: $error');
+///   case NavigationPending():
+///     print('Navigation is pending...');
+/// }
+/// ```
+///
+/// ## Extension Methods
+///
+/// The library provides convenient extension methods for checking result type:
+/// ```dart
+/// if (result.isSuccess) {
+///   final value = result.valueOrNull;
+///   // Handle success
+/// } else if (result.isFailed) {
+///   // Handle failure
+/// }
+/// ```
 library;
 
-/// Result of a navigation operation
+/// Sealed class representing the result of a navigation operation.
+///
+/// This is the base class for all navigation result types.
+/// Use pattern matching or extension methods to handle different outcomes.
+///
+/// ## Type Parameter
+///
+/// [T] represents the type of value returned from navigation.
+/// For navigation that doesn't return values, use `void` or `dynamic`.
+///
+/// ## Example
+///
+/// ```dart
+/// Future<NavigationResult<String>> navigateAndLogin() async {
+///   return await router.pushNamed('/login');
+/// }
+/// ```
 sealed class NavigationResult<T> {
   const NavigationResult();
 }
 
-/// Navigation was successful
+/// Represents successful navigation operation.
+///
+/// This result type indicates that navigation completed successfully
+/// and, optionally, returned a value from the navigated route.
+///
+/// ## Value Type
+///
+/// [T] represents the type of value returned. If the route
+/// doesn't return a value, this will be `void` or `dynamic`.
+///
+/// ## Example
+///
+/// ```dart
+/// // Route that returns a string
+/// final result = await router.pushNamed('/user/save');
+/// switch (result) {
+///   case NavigationSuccess(value: final message):
+///     ScaffoldMessenger.of(context).showSnackBar(
+///       SnackBar(content: Text(message)),
+///     );
+///   default:
+///     // Handle other cases
+/// }
+///
+/// // Route that doesn't return a value
+/// final voidResult = await router.pushNamed('/home');
+/// if (voidResult case NavigationSuccess()) {
+///   print('Successfully navigated to home');
+/// }
+/// ```
 class NavigationSuccess<T> extends NavigationResult<T> {
-  /// The result value returned from the route
+  /// The value returned from the navigated route.
+  ///
+  /// This will be null if the route doesn't return a value.
+  /// The type matches the generic parameter [T].
+  ///
+  /// Example: For navigation to `/user/save`, this might contain
+  /// the saved user ID or a confirmation message.
   final T? value;
 
+  /// Creates a successful navigation result.
+  ///
+  /// [value] is optional and represents the return value from navigation.
   const NavigationSuccess([this.value]);
 
   @override

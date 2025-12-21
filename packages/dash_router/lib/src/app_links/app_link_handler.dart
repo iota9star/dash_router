@@ -1,7 +1,57 @@
 import '../router/dash_router.dart';
 import '../utils/route_parser.dart';
 
-/// Handler for App Links (Deep Links)
+/// Handler for App Links and Deep Links in Dash Router.
+///
+/// This class provides comprehensive handling of deep linking scenarios,
+/// including scheme validation, host filtering, path transformation,
+/// and automatic navigation to appropriate routes.
+///
+/// ## Features
+///
+/// - **Scheme Validation**: Restrict links to specific URL schemes
+/// - **Host Filtering**: Limit links to certain domains
+/// - **Path Transformation**: Apply custom transformations before navigation
+/// - **Query Parameter Handling**: Automatically convert query params to route params
+/// - **Error Handling**: Graceful fallback when navigation fails
+///
+/// ## Basic Usage
+///
+/// ```dart
+/// final linkHandler = AppLinkHandler(
+///   router: router,
+///   scheme: 'myapp',
+///   host: 'example.com',
+/// );
+///
+/// // Handle incoming URL
+/// await linkHandler.handleUrl('myapp://example.com/user/123?tab=profile');
+/// ```
+///
+/// ## Advanced Usage with Transformers
+///
+/// ```dart
+/// final linkHandler = AppLinkHandler(
+///   router: router,
+///   scheme: 'myapp',
+///   transformers: [
+///     // Legacy URL migration
+///     PathMappingTransformer({
+///       '/old-page': '/new-page',
+///     }),
+///     // Dynamic segment extraction
+///     RegexPathTransformer(
+///       pattern: r'/user/(\d+)',
+///       builder: (match, params) => '/user-details/${match.group(1)}',
+///     ),
+///   ],
+/// );
+/// ```
+///
+/// See also:
+/// - [LinkTransformer] - Interface for custom path transformations
+/// - [PathMappingTransformer] - Simple path-to-path mapping
+/// - [RegexPathTransformer] - Regex-based path transformations
 class AppLinkHandler {
   /// The router instance
   final DashRouter router;

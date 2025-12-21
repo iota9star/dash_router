@@ -10,7 +10,8 @@ import '../utils/string_utils.dart';
 /// including the path pattern, parameters, guards, middleware, and
 /// transition configuration.
 ///
-/// Example:
+/// ## Example
+///
 /// ```dart
 /// // For a route annotated as:
 /// @DashRoute(path: '/user/:id')
@@ -21,6 +22,21 @@ import '../utils/string_utils.dart';
 /// // - pathParams: [ParamConfigModel(name: 'id', ...)]
 /// // - Generated route class name: 'User$IdRoute'
 /// ```
+///
+/// ## Generation Process
+///
+/// 1. **Extract Information**: Scans class for route annotations
+/// 2. **Parse Parameters**: Extracts path, query, and body parameters
+/// 3. **Generate Names**: Creates route, info, and params class names
+/// 4. **Create Models**: Populates this model with all metadata
+/// 5. **Template Rendering**: Uses model to generate final code
+///
+/// ## Usage in Generator
+///
+/// This model is used throughout the code generation pipeline:
+/// - **Visitor**: Extracts from AST
+/// - **Template**: Renders to code templates
+/// - **Validator**: Ensures configuration validity
 class RouteConfigModel {
   /// The annotated class element
   final ClassElement classElement;

@@ -1,6 +1,19 @@
 import 'route_parser.dart';
 
-/// Result of a route match operation
+/// Result of a route matching operation.
+///
+/// This class encapsulates the result of matching a path against a
+/// route pattern, including whether the match was successful, extracted
+/// parameters, and remaining path segments.
+///
+/// ## Example
+///
+/// ```dart
+/// final result = RouteMatcher.match('/user/:id', '/user/123');
+/// if (result.isMatch) {
+///   print('User ID: ${result.pathParams['id']}');
+/// }
+/// ```
 class RouteMatchResult {
   /// Whether the route matched
   final bool isMatch;
@@ -30,7 +43,50 @@ class RouteMatchResult {
       'remainingSegments: $remainingSegments, score: $score)';
 }
 
-/// Route matching utilities
+/// Advanced route matching utilities for Dash Router.
+///
+/// This class provides sophisticated pattern matching capabilities including
+/// parameter extraction, wildcard support, prefix matching, and scoring
+/// for determining the best route match when multiple patterns could apply.
+///
+/// ## Pattern Syntax
+///
+/// - **Static Segments**: `/user/profile` - matches exact path
+/// - **Parameters**: `/user/:id` - matches `/user/123`, extracts `id`
+/// - **Wildcards**: `/files/*` - matches `/users/123` but not `/users/123/posts`
+/// - **Multi-wildcard**: `/admin/**` - matches `/admin`, `/admin/users`, `/admin/users/123`
+///
+/// ## Matching Algorithm
+///
+/// 1. **Segment-by-segment comparison** - Each path segment is individually compared
+/// 2. **Parameter extraction** - Dynamic segments extract their values
+/// 3. **Scoring system** - Better matches get higher scores:
+///    - Exact segment match: 100 points
+///    - Parameter match: 10 points
+///    - Wildcard match: 1 point
+/// 4. **Best match selection** - Highest scoring pattern wins
+///
+/// ## Example
+///
+/// ```dart
+/// // Exact match - highest score
+/// final result1 = RouteMatcher.match('/user/profile', '/user/profile');
+/// print(result1.score); // 200 (2 exact segments)
+///
+/// // Parameter match - medium score
+/// final result2 = RouteMatcher.match('/user/:id', '/user/123');
+/// print(result2.score); // 110 (1 exact, 1 param)
+/// print(result2.pathParams['id']); // '123'
+///
+/// // Wildcard match - lowest score
+/// final result3 = RouteMatcher.match('/files/*', '/users/123');
+/// print(result3.score); // 100 (1 exact, 1 wildcard)
+///
+/// // Find best match from multiple patterns
+/// final patterns = ['/user/:id', '/users/:id', '/user/profile'];
+/// final best = RouteMatcher.findBestMatch(patterns, '/user/123');
+/// print(best?.$1); // '/user/:id'
+/// ```
 class RouteMatcher {
   RouteMatcher._();
 

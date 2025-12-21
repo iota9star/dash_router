@@ -8,12 +8,69 @@ import '../config/config_loader.dart';
 import '../config/file_scanner.dart';
 import '../utils/logger.dart';
 
-/// Command for generating routes.
+/// Command for generating routes from annotated classes.
 ///
-/// Configuration is optional and can be provided in several ways:
-/// 1. `dash_router.yaml` in project root
-/// 2. `dash_router` key in `pubspec.yaml`
-/// 3. Default configuration (if neither exists)
+/// This command scans your Dart files for route annotations and generates
+/// type-safe route code, navigation methods, and route information classes.
+/// It's the primary command for using Dash Router's code generation.
+///
+/// ## Configuration Sources
+///
+/// The command automatically detects configuration from multiple sources (in priority order):
+/// 1. `--config` command line argument
+/// 2. `dash_router.yaml` in project root
+/// 3. `dash_router` key in `pubspec.yaml`
+/// 4. Built-in default configuration
+///
+/// ## Generated Files
+///
+/// Based on configuration, this command generates:
+/// - `lib/generated/routes.dart` - Main route definitions
+/// - `lib/generated/route_info/` - Individual route info classes
+/// - Typed navigation extensions (optional)
+/// - Type-safe route classes (optional)
+///
+/// ## Example Usage
+///
+/// ```bash
+/// # Basic generation
+/// dash_router generate
+///
+/// # With custom config
+/// dash_router generate --config config/my_routes.yaml
+///
+/// # Verbose output
+/// dash_router generate --verbose
+///
+/// # Dry run (preview without writing)
+/// dash_router generate --dry-run
+/// ```
+///
+/// ## Project Structure
+///
+/// Expected project structure:
+/// ```
+/// your_project/
+/// ├── dash_router.yaml          # Configuration (optional)
+/// ├── pubspec.yaml
+/// └── lib/
+///     ├── generated/              # Generated files (auto-created)
+///     │   ├── routes.dart
+///     │   └── route_info/
+///     ├── pages/                 # Your page widgets
+///     │   ├── home_page.dart
+///     │   └── user_page.dart
+///     └── main.dart
+/// ```
+///
+/// ## Workflow
+///
+/// 1. **Scanning**: Recursively scans lib/ for Dart files
+/// 2. **Parsing**: Extracts route annotations and metadata
+/// 3. **Validation**: Ensures route definitions are valid
+/// 4. **Generation**: Creates type-safe code from annotations
+/// 5. **Formatting**: Formats generated code with dart format
+/// 6. **Reporting**: Shows summary of generated files
 class GenerateCommand extends Command<int> {
   @override
   final String name = 'generate';

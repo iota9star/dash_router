@@ -4,22 +4,105 @@ import 'package:flutter/widgets.dart';
 import '../router/dash_router.dart';
 import '../router/route_data.dart';
 
-/// Navigation manager providing high-level navigation API
+/// Navigation manager providing high-level navigation API.
+///
+/// This class wraps the core DashRouter functionality in a
+/// convenient, high-level API for common navigation operations.
+/// It provides type-safe methods for all navigation patterns.
+///
+/// ## Example
+///
+/// ```dart
+/// class MyWidget extends StatelessWidget {
+///   @override
+///   Widget build(BuildContext context) {
+///     final nav = context.navigationManager;
+///     
+///     return Column(
+///       children: [
+///         ElevatedButton(
+///           onPressed: () => nav.push('/user/123'),
+///           child: Text('Push User'),
+///         ),
+///         ElevatedButton(
+///           onPressed: () => nav.replace('/settings'),
+///           child: Text('Replace Settings'),
+///         ),
+///         if (nav.canGoBack)
+///           ElevatedButton(
+///             onPressed: () => nav.back(),
+///             child: Text('Back'),
+///           ),
+///       ],
+///     );
+///   }
+/// }
+/// ```
 class NavigationManager {
+  /// The underlying router instance.
   final DashRouter _router;
 
+  /// Creates a navigation manager.
+  ///
+  /// [_router] - The DashRouter instance to wrap
   NavigationManager(this._router);
 
-  /// Get current route
+  /// Gets the currently active route.
+  ///
+  /// Returns null if no route is currently active.
+  ///
+  /// Example:
+  /// ```dart
+  /// final current = nav.currentRoute;
+  /// if (current != null) {
+  ///   print('Current path: ${current.path}');
+  /// }
+  /// ```
   RouteData? get currentRoute => _router.currentRoute;
 
-  /// Get previous route path
+  /// Gets the path of the previous route.
+  ///
+  /// Returns null if there's no previous route in history.
+  ///
+  /// Example:
+  /// ```dart
+  /// final previous = nav.previousPath;
+  /// if (previous != null) {
+  ///   print('Came from: $previous');
+  /// }
+  /// ```
   String? get previousPath => _router.history.previousPath;
 
-  /// Check if can go back
+  /// Checks if navigation can go back.
+  ///
+  /// Returns false if at the root of navigation stack.
+  /// This respects route guards that might prevent popping.
+  ///
+  /// Example:
+  /// ```dart
+  /// if (nav.canGoBack) {
+  ///   nav.back();
+  /// }
+  /// ```
   bool get canGoBack => _router.canPop();
 
-  /// Push a new route
+  /// Pushes a new route onto the navigation stack.
+  ///
+  /// [path] - The route path to navigate to
+  /// [query] - Optional query parameters
+  /// [extra] - Optional extra data to pass
+  /// [transition] - Optional custom transition
+  ///
+  /// Returns the result from the pushed route if any.
+  ///
+  /// Example:
+  /// ```dart
+  /// final result = await nav.push(
+  ///   '/user/123',
+  ///   query: {'tab': 'profile'},
+  ///   extra: {'source': 'search'},
+  /// );
+  /// ```
   Future<T?> push<T>(
     String path, {
     Map<String, dynamic>? query,
